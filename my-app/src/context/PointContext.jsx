@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 import toast from 'react-hot-toast';
 
 const PointContext = createContext();
@@ -20,11 +21,10 @@ const REWARD_POLICIES = {
 };
 
 export const PointProvider = ({ children }) => {
-    // 초기 포인트 (localStorage에서 불러오기)
-    const [totalPoints, setTotalPoints] = useState(() => {
-        const saved = localStorage.getItem('userTotalPoints');
-        return saved ? parseInt(saved) : 500; // 기본값 500
-    });
+    const { user } = useAuth();
+
+    // 초기 포인트 (로그인한 사용자의 포인트 사용)
+    const [totalPoints, setTotalPoints] = useState(0);
 
     // AchievementLog 시뮬레이션 (localStorage)
     const [achievementLogs, setAchievementLogs] = useState(() => {
@@ -32,10 +32,12 @@ export const PointProvider = ({ children }) => {
         return saved ? JSON.parse(saved) : [];
     });
 
-    // 포인트 변경 시 localStorage에 저장
+    // 사용자가 로그인하면 포인트를 user.mypoints로 설정
     useEffect(() => {
-        localStorage.setItem('userTotalPoints', totalPoints.toString());
-    }, [totalPoints]);
+        if (user && user.mypoints !== undefined) {
+            setTotalPoints(user.mypoints);
+        }
+    }, [user]);
 
     // AchievementLog 변경 시 localStorage에 저장
     useEffect(() => {

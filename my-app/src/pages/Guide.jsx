@@ -1,22 +1,12 @@
 import { useState, useEffect } from "react";
 import RoutineTab from "./guide/RoutineTab";
 import DietTab from "./guide/DietTab";
-import { v4 as uuidv4 } from "uuid"; // npm install uuid
+import { useAuth } from "../context/AuthContext";
 
 export default function Guide() {
+  const { user } = useAuth();
   const [tab, setTab] = useState("routine");
   const [darkMode, setDarkMode] = useState(false);
-  const [userId, setUserId] = useState("");
-
-  // 유저 고유 ID 저장
-  useEffect(() => {
-    let savedId = localStorage.getItem("userId");
-    if (!savedId) {
-      savedId = uuidv4();
-      localStorage.setItem("userId", savedId);
-    }
-    setUserId(savedId);
-  }, []);
 
   // 다크모드 유지
   useEffect(() => {
@@ -77,9 +67,9 @@ export default function Guide() {
       </div>
 
       {tab === "routine" ? (
-        <RoutineTab darkMode={darkMode} userId={userId} />
+        <RoutineTab darkMode={darkMode} userId={user?.member_id} />
       ) : (
-        <DietTab darkMode={darkMode} userId={userId} />
+        <DietTab darkMode={darkMode} userId={user?.member_id} />
       )}
     </div>
   );

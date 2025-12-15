@@ -5,7 +5,7 @@ import { usePoints } from '../context/PointContext';
 // ... (위에 있는 수정된 initialQuests 데이터) ...
 const initialQuests = [
     // (수정된 퀘스트 목록)
-    { id: 1, title: "💪 헬스장 첫 방문", description: "처음으로 헬스장을 방문하여 출석체크", points: 300, isCompleted: true },
+    { id: 1, title: "💪 헬스장 첫 방문", description: "처음으로 헬스장을 방문하여 출석체크", points: 300, isCompleted: false },
     { id: 2, title: "🤝 친구 초대하기", description: "친구 1명 헬스장 신규 등록", points: 200, isCompleted: false },
     { id: 3, title: "🤝 친구 초대하기", description: "친구 3명 헬스장 신규 등록", points: 500, isCompleted: false },
     { id: 4, title: "🤝 친구 초대하기", description: "친구 5명 헬스장 신규 등록", points: 1000, isCompleted: false },

@@ -1,33 +1,10 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { usePoints } from "../context/PointContext";
-
-// 더미 목표 데이터
-const DUMMY_GOALS = [
-  {
-    goal_id: 1,
-    member_id: 1,
-    item_name: "벤치프레스 100kg 달성",
-    target_date: "2025-02-28",
-    is_achieved: false
-  },
-  {
-    goal_id: 2,
-    member_id: 1,
-    item_name: "체지방률 15% 이하",
-    target_date: "2025-03-31",
-    is_achieved: false
-  },
-  {
-    goal_id: 3,
-    member_id: 1,
-    item_name: "30일 연속 출석",
-    target_date: "2025-02-15",
-    is_achieved: true
-  }
-];
+import { useAuth } from "../context/AuthContext";
 
 export default function Goal({ isDark = true }) {
+  const { user } = useAuth();
   const { checkGoalBatchReward } = usePoints();
   const [goals, setGoals] = useState([]);
   const [newGoal, setNewGoal] = useState("");
@@ -35,27 +12,21 @@ export default function Goal({ isDark = true }) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // 더미 데이터 로드
+  // 사용자 목표 로드
   useEffect(() => {
-    loadGoals();
-  }, []);
+    if (user) {
+      loadGoals();
+    }
+  }, [user]);
 
   const loadGoals = async () => {
     try {
       setLoading(true);
-
-      // 로컬스토리지에서 먼저 확인
-      const savedGoals = localStorage.getItem('goals');
-      if (savedGoals) {
-        setGoals(JSON.parse(savedGoals));
-      } else {
-        // 없으면 더미 데이터 사용
-        setGoals(DUMMY_GOALS);
-        localStorage.setItem('goals', JSON.stringify(DUMMY_GOALS));
-      }
+      // 빈 배열로 시작 (실제 API 연동 시 백엔드에서 가져올 데이터)
+      setGoals([]);
     } catch (error) {
       console.error('목표 로드 실패:', error);
-      setGoals(DUMMY_GOALS);
+      setGoals([]);
     } finally {
       setLoading(false);
     }
@@ -68,7 +39,7 @@ export default function Goal({ isDark = true }) {
     try {
       const newGoalData = {
         goal_id: Date.now(),
-        member_id: 1,
+        member_id: user?.member_id || 1,
         item_name: newGoal,
         target_date: targetDate,
         is_achieved: false,
@@ -77,7 +48,6 @@ export default function Goal({ isDark = true }) {
 
       const updatedGoals = [...goals, newGoalData];
       setGoals(updatedGoals);
-      localStorage.setItem('goals', JSON.stringify(updatedGoals));
 
       // 배치 보상 체크 (목표 2개마다 80P)
       const achievementId = checkGoalBatchReward(updatedGoals);
@@ -95,7 +65,6 @@ export default function Goal({ isDark = true }) {
         });
 
         setGoals(finalGoals);
-        localStorage.setItem('goals', JSON.stringify(finalGoals));
       }
 
       setNewGoal("");
@@ -114,7 +83,6 @@ export default function Goal({ isDark = true }) {
         g.goal_id === goalId ? { ...g, is_achieved: !g.is_achieved } : g
       );
       setGoals(updatedGoals);
-      localStorage.setItem('goals', JSON.stringify(updatedGoals));
     } catch (error) {
       console.error('목표 업데이트 실패:', error);
       alert('목표 업데이트에 실패했습니다.');
@@ -126,7 +94,6 @@ export default function Goal({ isDark = true }) {
     try {
       const updatedGoals = goals.filter((g) => g.goal_id !== goalId);
       setGoals(updatedGoals);
-      localStorage.setItem('goals', JSON.stringify(updatedGoals));
     } catch (error) {
       console.error('목표 삭제 실패:', error);
       alert('목표 삭제에 실패했습니다.');

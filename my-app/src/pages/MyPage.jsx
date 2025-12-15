@@ -15,6 +15,7 @@ import Goal from "./Goal";
 import WeightChart from "../components/WeightChart";
 import DailyRecordCard from "../components/DailyRecordCard";
 import { usePoints } from "../context/PointContext";
+import { useAuth } from "../context/AuthContext";
 import toast from 'react-hot-toast';
 
 // Chart.js 등록
@@ -525,6 +526,7 @@ export default function MyPage() {
     }
   };
 
+  const { user } = useAuth();
   const [currentUser, setCurrentUser] = useState(null);
   const [exerciseLogs, setExerciseLogs] = useState([]);
   const [dietLogs, setDietLogs] = useState([]);
@@ -554,27 +556,29 @@ export default function MyPage() {
     localStorage.setItem('myPageTheme', isDark ? 'dark' : 'light');
   }, [isDark]);
 
-  // 더미 데이터 로드
+  // 실제 사용자 데이터 로드
   useEffect(() => {
-    loadAllData();
-  }, []);
+    if (user) {
+      loadAllData();
+    }
+  }, [user]);
 
   const loadAllData = async () => {
     try {
       setLoading(true);
 
-      // 더미 데이터를 비동기처럼 로드 (실제 API 호출 시뮬레이션)
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // 실제 로그인한 사용자 정보 사용
+      setCurrentUser(user);
 
-      setCurrentUser(DUMMY_USER);
-      setExerciseLogs(DUMMY_EXERCISE_LOGS);
-      setDietLogs(DUMMY_DIET_LOGS);
-      setHealthRecords(DUMMY_HEALTH_RECORDS);
-      setAttendances(DUMMY_ATTENDANCES);
-      setPointHistory(DUMMY_POINT_HISTORY);
-      setPointExchanges(DUMMY_POINT_EXCHANGES);
-      setBadges(DUMMY_BADGES);
-      setMemberBadges(DUMMY_MEMBER_BADGES);
+      // 빈 데이터로 초기화 (실제 API 연동 시 백엔드에서 가져올 데이터)
+      setExerciseLogs([]);
+      setDietLogs([]);
+      setHealthRecords([]);
+      setAttendances([]);
+      setPointHistory([]);
+      setPointExchanges([]);
+      setBadges([]);
+      setMemberBadges([]);
       setExerciseList(DUMMY_EXERCISE_LIST);
       setFoodList(DUMMY_FOOD_LIST);
     } catch (error) {

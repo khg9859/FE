@@ -34,8 +34,17 @@ export default function DietTab({ darkMode, userId }) {
     localStorage.setItem("dietLikedPosts", JSON.stringify(likedPosts));
   }, [likedPosts]);
 
-  // ❤️ 좋아요 기능 (1회 제한)
+  // ❤️ 좋아요 기능 (1회 제한 + 본인 게시물 불가)
   const handleLike = (id) => {
+    const post = posts.find(p => p.id === id);
+
+    // 본인 게시물 체크
+    if (post && post.authorId === userId) {
+      alert("본인이 작성한 게시글에는 좋아요를 누를 수 없습니다 😅");
+      return;
+    }
+
+    // 이미 좋아요 누른 게시글 체크
     if (likedPosts.includes(id)) {
       alert("이미 좋아요를 누른 게시글입니다 👍");
       return;

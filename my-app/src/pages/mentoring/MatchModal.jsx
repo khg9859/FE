@@ -5,14 +5,14 @@ export default function MatchModal({ type, targetName, onConfirm, onCancel, dark
     request: `${targetName} 님에게 멘토링 신청을 보내시겠습니까?`,
     accept: `${targetName} 님의 신청을 수락하시겠습니까?`,
     reject: `${targetName} 님의 신청을 거절하시겠습니까?`,
-    terminate: `${targetName} 님과의 매칭을 종료하시겠습니까?`,
+    terminate: `${targetName} 님과의 매칭을 파기하시겠습니까?`,
   };
 
   const confirmText = {
     request: "신청하기",
     accept: "수락",
     reject: "거절",
-    terminate: "종료",
+    terminate: "파기",
   };
 
   const colorStyle = {
