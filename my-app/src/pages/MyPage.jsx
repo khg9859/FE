@@ -462,6 +462,24 @@ const DUMMY_MEMBER_BADGES = [
   }
 ];
 
+// 뱃지 이름에 따라 아이콘 반환
+const getBadgeIcon = (badgeName) => {
+  const iconMap = {
+    '헬스 입문자': '🏋️',
+    '운동 마니아': '💪',
+    '식단 관리자': '🥗',
+    '출석왕': '👑',
+    '근육 빌더': '💪',
+    '목표 달성자': '🎯',
+    '포인트 부자': '💰',
+    '건강 지킴이': '❤️',
+    '멘토': '🎓',
+    '다이어트 성공': '🎉',
+    '완벽한 식단': '🍽️'
+  };
+  return iconMap[badgeName] || '🏅';
+};
+
 export default function MyPage() {
   // 전역 포인트 Context 사용
   const {
@@ -473,7 +491,7 @@ export default function MyPage() {
   } = usePoints();
 
   // 출석 체크 함수
-  const handleCheckIn = () => {
+  const handleCheckIn = async () => {
     // 오늘 이미 출석했는지 확인
     const today = new Date().toISOString().split('T')[0];
     const alreadyCheckedIn = attendances.some(a => {
@@ -489,40 +507,67 @@ export default function MyPage() {
       return;
     }
 
-    const newAttendance = {
-      attendance_id: attendances.length + 1,
-      member_id: currentUser.member_id,
-      entered_at: new Date().toISOString(),
-      left_at: null,
-      attendance_type: '헬스장',
-      achievement_id: null
-    };
-
-    const updatedAttendances = [...attendances, newAttendance];
-    setAttendances(updatedAttendances);
-
-    // 출석 성공 알림
-    toast.success('출석 체크 완료!', {
-      icon: '✓',
-      duration: 2000
-    });
-
-    // 배치 보상 체크 (출석 10회마다 200P)
-    const achievementId = checkAttendanceBatchReward(updatedAttendances);
-
-    // achievement_id 연결 (10회 달성 시)
-    if (achievementId) {
-      const unrewardedLogs = updatedAttendances.filter(log => !log.achievement_id);
-      const logsToUpdate = unrewardedLogs.slice(0, 10);
-
-      const finalAttendances = updatedAttendances.map(attendance => {
-        if (logsToUpdate.find(a => a.attendance_id === attendance.attendance_id)) {
-          return { ...attendance, achievement_id: achievementId };
-        }
-        return attendance;
+    try {
+      // 서버에 출석 체크 요청
+      const response = await fetch('http://localhost:5001/api/attendance/check-in', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          member_id: currentUser.member_id,
+          attendance_type: '헬스장'
+        })
       });
 
-      setAttendances(finalAttendances);
+      if (!response.ok) {
+        throw new Error('출석 체크 실패');
+      }
+
+      const data = await response.json();
+
+      // 새로운 출석 데이터 생성
+      const newAttendance = {
+        attendance_id: data.attendance_id,
+        member_id: currentUser.member_id,
+        entered_at: new Date().toISOString(),
+        left_at: null,
+        attendance_type: '헬스장',
+        achievement_id: null
+      };
+
+      const updatedAttendances = [...attendances, newAttendance];
+      setAttendances(updatedAttendances);
+
+      // 출석 성공 알림
+      toast.success('출석 체크 완료!', {
+        icon: '✓',
+        duration: 2000
+      });
+
+      // 배치 보상 체크 (출석 10회마다 200P)
+      const achievementId = checkAttendanceBatchReward(updatedAttendances);
+
+      // achievement_id 연결 (10회 달성 시)
+      if (achievementId) {
+        const unrewardedLogs = updatedAttendances.filter(log => !log.achievement_id);
+        const logsToUpdate = unrewardedLogs.slice(0, 10);
+
+        const finalAttendances = updatedAttendances.map(attendance => {
+          if (logsToUpdate.find(a => a.attendance_id === attendance.attendance_id)) {
+            return { ...attendance, achievement_id: achievementId };
+          }
+          return attendance;
+        });
+
+        setAttendances(finalAttendances);
+      }
+    } catch (error) {
+      console.error('출석 체크 오류:', error);
+      toast.error('출석 체크에 실패했습니다.', {
+        icon: '❌',
+        duration: 3000
+      });
     }
   };
 
@@ -570,15 +615,52 @@ export default function MyPage() {
       // 실제 로그인한 사용자 정보 사용
       setCurrentUser(user);
 
+      // 서버에서 출석 데이터 가져오기
+      try {
+        const attendanceResponse = await fetch(`http://localhost:5001/api/attendance/${user.member_id}`);
+        if (attendanceResponse.ok) {
+          const attendanceData = await attendanceResponse.json();
+          setAttendances(attendanceData);
+        } else {
+          setAttendances([]);
+        }
+      } catch (error) {
+        console.error('출석 데이터 로드 실패:', error);
+        setAttendances([]);
+      }
+
+      // 뱃지 데이터 가져오기
+      try {
+        // 모든 뱃지 목록
+        const badgesResponse = await fetch('http://localhost:5001/api/badges');
+        if (badgesResponse.ok) {
+          const badgesData = await badgesResponse.json();
+          // 아이콘 추가
+          const badgesWithIcons = badgesData.map(badge => ({
+            ...badge,
+            icon: badge.badge_icon || getBadgeIcon(badge.badge_name)
+          }));
+          setBadges(badgesWithIcons);
+        }
+
+        // 내가 획득한 뱃지
+        const memberBadgesResponse = await fetch(`http://localhost:5001/api/badges/member/${user.member_id}`);
+        if (memberBadgesResponse.ok) {
+          const memberBadgesData = await memberBadgesResponse.json();
+          setMemberBadges(memberBadgesData);
+        }
+      } catch (error) {
+        console.error('뱃지 데이터 로드 실패:', error);
+        setBadges([]);
+        setMemberBadges([]);
+      }
+
       // 빈 데이터로 초기화 (실제 API 연동 시 백엔드에서 가져올 데이터)
       setExerciseLogs([]);
       setDietLogs([]);
       setHealthRecords([]);
-      setAttendances([]);
       setPointHistory([]);
       setPointExchanges([]);
-      setBadges([]);
-      setMemberBadges([]);
       setExerciseList(DUMMY_EXERCISE_LIST);
       setFoodList(DUMMY_FOOD_LIST);
     } catch (error) {
@@ -727,8 +809,10 @@ export default function MyPage() {
       currentDate.getMonth() + 1
     ).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     return attendances.some((a) => {
-      const attendDate = new Date(a.entered_at).toISOString().split("T")[0];
-      return attendDate === dateStr;
+      if (!a.entered_at) return false;
+      const attendDate = new Date(a.entered_at);
+      if (isNaN(attendDate.getTime())) return false;
+      return attendDate.toISOString().split("T")[0] === dateStr;
     });
   };
 
@@ -1308,7 +1392,7 @@ export default function MyPage() {
       {/* 나의 요약 섹션 */}
       <div className="max-w-7xl mx-auto mt-8">
         <h2 className="text-3xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-          📊 나의 요약
+          나의 요약
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">

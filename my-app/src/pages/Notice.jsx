@@ -35,8 +35,8 @@ export default function Notice() {
             whileTap={{ scale: 0.95 }}
             onClick={toggleTheme}
             className={`p-3 rounded-xl font-semibold transition ${isDark
-                ? 'bg-gray-800 hover:bg-gray-700'
-                : 'bg-white hover:bg-gray-100 shadow-lg'
+              ? 'bg-gray-800 hover:bg-gray-700'
+              : 'bg-white hover:bg-gray-100 shadow-lg'
               }`}
           >
             {isDark ? '☀️' : '🌙'}
@@ -51,8 +51,8 @@ export default function Notice() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
           className={`rounded-2xl p-8 border shadow-xl ${isDark
-              ? 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border-gray-700/50'
-              : 'bg-white border-gray-200'
+            ? 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border-gray-700/50'
+            : 'bg-white border-gray-200'
             }`}
         >
           <div className="flex items-center gap-3 mb-6">
@@ -67,8 +67,8 @@ export default function Notice() {
             <motion.div
               whileHover={{ scale: 1.02, y: -5 }}
               className={`p-6 rounded-xl border-2 ${isDark
-                  ? 'bg-blue-900/20 border-blue-700/50 hover:border-blue-600'
-                  : 'bg-blue-50 border-blue-200 hover:border-blue-400'
+                ? 'bg-blue-900/20 border-blue-700/50 hover:border-blue-600'
+                : 'bg-blue-50 border-blue-200 hover:border-blue-400'
                 }`}
             >
               <div className="flex items-center gap-3 mb-4">
@@ -87,8 +87,8 @@ export default function Notice() {
             <motion.div
               whileHover={{ scale: 1.02, y: -5 }}
               className={`p-6 rounded-xl border-2 ${isDark
-                  ? 'bg-green-900/20 border-green-700/50 hover:border-green-600'
-                  : 'bg-green-50 border-green-200 hover:border-green-400'
+                ? 'bg-green-900/20 border-green-700/50 hover:border-green-600'
+                : 'bg-green-50 border-green-200 hover:border-green-400'
                 }`}
             >
               <div className="flex items-center gap-3 mb-4">
@@ -107,8 +107,8 @@ export default function Notice() {
             <motion.div
               whileHover={{ scale: 1.02, y: -5 }}
               className={`p-6 rounded-xl border-2 ${isDark
-                  ? 'bg-purple-900/20 border-purple-700/50 hover:border-purple-600'
-                  : 'bg-purple-50 border-purple-200 hover:border-purple-400'
+                ? 'bg-purple-900/20 border-purple-700/50 hover:border-purple-600'
+                : 'bg-purple-50 border-purple-200 hover:border-purple-400'
                 }`}
             >
               <div className="flex items-center gap-3 mb-4">
@@ -127,8 +127,8 @@ export default function Notice() {
             <motion.div
               whileHover={{ scale: 1.02, y: -5 }}
               className={`p-6 rounded-xl border-2 ${isDark
-                  ? 'bg-pink-900/20 border-pink-700/50 hover:border-pink-600'
-                  : 'bg-pink-50 border-pink-200 hover:border-pink-400'
+                ? 'bg-pink-900/20 border-pink-700/50 hover:border-pink-600'
+                : 'bg-pink-50 border-pink-200 hover:border-pink-400'
                 }`}
             >
               <div className="flex items-center gap-3 mb-4">
@@ -149,8 +149,8 @@ export default function Notice() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
             className={`mt-6 p-4 rounded-xl ${isDark
-                ? 'bg-yellow-900/20 border border-yellow-700/30'
-                : 'bg-yellow-50 border border-yellow-200'
+              ? 'bg-yellow-900/20 border border-yellow-700/30'
+              : 'bg-yellow-50 border border-yellow-200'
               }`}
           >
             <div className="flex items-start gap-3">
@@ -169,8 +169,8 @@ export default function Notice() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           className={`rounded-2xl p-8 border shadow-xl ${isDark
-              ? 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border-gray-700/50'
-              : 'bg-white border-gray-200'
+            ? 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border-gray-700/50'
+            : 'bg-white border-gray-200'
             }`}
         >
           <div className="flex items-center gap-3 mb-6">
@@ -217,8 +217,8 @@ export default function Notice() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
           className={`rounded-2xl p-8 border shadow-xl ${isDark
-              ? 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border-gray-700/50'
-              : 'bg-white border-gray-200'
+            ? 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border-gray-700/50'
+            : 'bg-white border-gray-200'
             }`}
         >
           <div className="flex items-center gap-3 mb-6">
@@ -257,8 +257,8 @@ export default function Notice() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
           className={`rounded-2xl p-8 border shadow-xl text-center ${isDark
-              ? 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border-gray-700/50'
-              : 'bg-white border-gray-200'
+            ? 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border-gray-700/50'
+            : 'bg-white border-gray-200'
             }`}
         >
           <span className="text-5xl mb-4 block">📞</span>

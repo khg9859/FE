@@ -28,10 +28,10 @@ export default function Home() {
 
       {/* 하단 고정 배너 */}
       <div className="absolute bottom-0 left-0 w-full bg-blue-700 text-white py-3 flex justify-around text-sm font-semibold">
-        <span>전체 포인트 수령 &gt; 100p</span>
-        <span>즐겨라, 배우라, 이겨내라!</span>
-        <span>오늘 몇시-몇시 수업</span>
-        <span>이번 달 전체 포인트 수령 &gt; 100p</span>
+        <span>오늘의 땀은 내일의 자신감이다.</span>
+        <span>몸은 정직하다, 한 만큼 변한다.</span>
+        <span>지금의 선택이 몸을 만든다.</span>
+        <span>오늘 안 하면 내일도 안 한다.</span>
       </div>
     </div>
   );

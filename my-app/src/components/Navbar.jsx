@@ -1,9 +1,11 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { usePoints } from "../context/PointContext";
 import toast from "react-hot-toast";
 
 export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
+  const { totalPoints } = usePoints();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -28,13 +30,13 @@ export default function Navbar() {
         <Link to="/class" className="hover:text-gray-400 transition">수업</Link>
         <Link to="/mentoring" className="hover:text-gray-400 transition">멘토링 신청</Link>
         <Link to="/guide" className="hover:text-gray-400 transition">헬스 가이드</Link>
-        <Link to="/incentive" className="hover:text-gray-400 transition">포인트/퀘스트</Link>
+        <Link to="/incentive" className="hover:text-gray-400 transition">퀘스트</Link>
         <Link to="/mypage" className="hover:text-gray-400 transition">마이페이지</Link>
 
         {isAuthenticated ? (
           <div className="flex items-center space-x-4">
             <span className="text-emerald-300">{user?.name}님</span>
-            <span className="text-yellow-400">{user?.mypoints}P</span>
+            <span className="text-yellow-400 font-bold">{totalPoints}P</span>
             <button
               onClick={handleLogout}
               className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition"
