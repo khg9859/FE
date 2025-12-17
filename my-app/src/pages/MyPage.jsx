@@ -797,7 +797,7 @@ export default function MyPage() {
           height_cm: healthData.height,
           weight_kg: healthData.weight,
           muscle_mass_kg: healthData.muscle || null,
-          fat_mass_kg: healthData.fat || null,
+          body_fat_percent: healthData.fat || null,
           measured_at: new Date().toISOString()
         })
       });
@@ -1977,7 +1977,7 @@ function AddRecordModal({ exerciseList, foodList, onClose, onAddExercise, onAddD
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold mb-2">체지방 (kg)</label>
+                  <label className="block text-sm font-semibold mb-2">체지방률 (%)</label>
                   <input
                     type="number"
                     value={fat}

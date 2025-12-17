@@ -14,8 +14,8 @@ export default function DailyRecordCard({ date, records, isDark, onClose }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             className={`mt-6 rounded-2xl p-6 border shadow-2xl ${isDark
-                    ? 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border-gray-700/50'
-                    : 'bg-white border-gray-200'
+                ? 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border-gray-700/50'
+                : 'bg-white border-gray-200'
                 }`}
         >
             <div className="flex justify-between items-center mb-6">
@@ -49,8 +49,8 @@ export default function DailyRecordCard({ date, records, isDark, onClose }) {
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: idx * 0.05 }}
                                     className={`p-4 rounded-xl border relative overflow-hidden group ${isDark
-                                            ? 'bg-gradient-to-r from-blue-900/30 to-purple-900/30 border-blue-700/30 hover:border-blue-600/50'
-                                            : 'bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 hover:border-blue-300'
+                                        ? 'bg-gradient-to-r from-blue-900/30 to-purple-900/30 border-blue-700/30 hover:border-blue-600/50'
+                                        : 'bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 hover:border-blue-300'
                                         } transition-all`}
                                 >
                                     <div className="absolute top-0 right-0 w-20 h-20 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition"></div>
@@ -99,8 +99,8 @@ export default function DailyRecordCard({ date, records, isDark, onClose }) {
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: idx * 0.05 }}
                                     className={`p-4 rounded-xl border relative overflow-hidden group ${isDark
-                                            ? 'bg-gradient-to-r from-green-900/30 to-emerald-900/30 border-green-700/30 hover:border-green-600/50'
-                                            : 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 hover:border-green-300'
+                                        ? 'bg-gradient-to-r from-green-900/30 to-emerald-900/30 border-green-700/30 hover:border-green-600/50'
+                                        : 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 hover:border-green-300'
                                         } transition-all`}
                                 >
                                     <div className="absolute top-0 right-0 w-20 h-20 bg-green-500/10 rounded-full blur-2xl group-hover:bg-green-500/20 transition"></div>
@@ -108,9 +108,9 @@ export default function DailyRecordCard({ date, records, isDark, onClose }) {
                                         <div className="flex items-center justify-between mb-2">
                                             <div className="flex items-center gap-2">
                                                 <span className={`px-2 py-0.5 rounded text-xs font-bold ${log.meal_type === '아침' ? 'bg-yellow-500/20 text-yellow-400' :
-                                                        log.meal_type === '점심' ? 'bg-orange-500/20 text-orange-400' :
-                                                            log.meal_type === '저녁' ? 'bg-purple-500/20 text-purple-400' :
-                                                                'bg-pink-500/20 text-pink-400'
+                                                    log.meal_type === '점심' ? 'bg-orange-500/20 text-orange-400' :
+                                                        log.meal_type === '저녁' ? 'bg-purple-500/20 text-purple-400' :
+                                                            'bg-pink-500/20 text-pink-400'
                                                     }`}>
                                                     {log.meal_type}
                                                 </span>
@@ -158,8 +158,8 @@ export default function DailyRecordCard({ date, records, isDark, onClose }) {
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: idx * 0.05 }}
                                     className={`p-4 rounded-xl border relative overflow-hidden ${isDark
-                                            ? 'bg-gradient-to-r from-red-900/30 to-pink-900/30 border-red-700/30'
-                                            : 'bg-gradient-to-r from-red-50 to-pink-50 border-red-200'
+                                        ? 'bg-gradient-to-r from-red-900/30 to-pink-900/30 border-red-700/30'
+                                        : 'bg-gradient-to-r from-red-50 to-pink-50 border-red-200'
                                         }`}
                                 >
                                     <div className="absolute top-0 right-0 w-20 h-20 bg-red-500/10 rounded-full blur-2xl"></div>
@@ -173,8 +173,8 @@ export default function DailyRecordCard({ date, records, isDark, onClose }) {
                                             <span className="font-bold text-lg">{log.muscle_mass_kg}kg</span>
                                         </div>
                                         <div className="flex flex-col">
-                                            <span className="text-gray-400 text-xs mb-1">체지방</span>
-                                            <span className="font-bold text-lg">{log.fat_mass_kg}kg</span>
+                                            <span className="text-gray-400 text-xs mb-1">체지방률</span>
+                                            <span className="font-bold text-lg">{log.body_fat_percent}%</span>
                                         </div>
                                         <div className="flex flex-col">
                                             <span className="text-gray-400 text-xs mb-1">BMI</span>
