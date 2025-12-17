@@ -789,46 +789,6 @@ export default function MyPage() {
     }
   };
 
-  // 건강 기록 추가
-  const addHealthRecord = async (data) => {
-    try {
-      // 서버에 건강 기록 추가 요청
-      const response = await fetch(getApiUrl('/api/health'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          member_id: currentUser.member_id,
-          height_cm: data.height,
-          weight_kg: data.weight,
-          muscle_mass_kg: data.muscle,
-          fat_mass_kg: data.fat,
-          measured_at: new Date()
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('건강 기록 추가 실패');
-      }
-
-      toast.success('건강 기록이 추가되었습니다!', {
-        icon: '❤️',
-        duration: 2000
-      });
-
-      setShowAddRecordModal(false);
-
-      // 데이터 새로고침은 나중에 구현 (현재는 더미 데이터 사용 중)
-    } catch (error) {
-      console.error('건강 기록 추가 실패:', error);
-      toast.error('건강 기록 추가에 실패했습니다.', {
-        icon: '❌',
-        duration: 3000
-      });
-    }
-  };
-
   // 캘린더 생성
   const getDaysInMonth = (date) => {
     const year = date.getFullYear();
