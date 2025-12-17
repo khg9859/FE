@@ -660,8 +660,21 @@ export default function MyPage() {
         setFoodList(DUMMY_FOOD_LIST);
       }
 
+      // 서버에서 건강 기록 가져오기
+      try {
+        const healthResponse = await fetch(getApiUrl(`/api/health/${user.member_id}`));
+        if (healthResponse.ok) {
+          const healthData = await healthResponse.json();
+          setHealthRecords(healthData);
+        } else {
+          setHealthRecords([]);
+        }
+      } catch (error) {
+        console.error('건강 기록 로드 실패:', error);
+        setHealthRecords([]);
+      }
+
       // 나머지는 더미 데이터 사용
-      setHealthRecords(DUMMY_HEALTH_RECORDS);
       setPointHistory(DUMMY_POINT_HISTORY);
       setPointExchanges(DUMMY_POINT_EXCHANGES);
       setBadges(DUMMY_BADGES);
@@ -769,20 +782,30 @@ export default function MyPage() {
   // 건강 기록 추가
   const addHealthRecord = async (healthData) => {
     try {
-      // 현재는 localStorage에 저장 (나중에 서버 API로 변경 가능)
-      const newRecord = {
-        record_id: Date.now(),
-        member_id: currentUser.member_id,
-        measured_at: new Date().toISOString(),
-        height: healthData.height,
-        weight: healthData.weight,
-        muscle_mass: healthData.muscle,
-        body_fat: healthData.fat
-      };
+      if (!currentUser || !currentUser.member_id) {
+        throw new Error('사용자 정보를 찾을 수 없습니다.');
+      }
 
-      const updatedRecords = [newRecord, ...healthRecords];
-      setHealthRecords(updatedRecords);
-      localStorage.setItem('healthRecords', JSON.stringify(updatedRecords));
+      // 서버에 건강 기록 추가 요청
+      const response = await fetch(getApiUrl('/api/health'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          member_id: currentUser.member_id,
+          height_cm: healthData.height,
+          weight_kg: healthData.weight,
+          muscle_mass_kg: healthData.muscle || null,
+          fat_mass_kg: healthData.fat || null,
+          measured_at: new Date().toISOString()
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '건강 기록 추가 실패');
+      }
 
       toast.success('건강 기록이 추가되었습니다!', {
         icon: '📊',
@@ -790,9 +813,12 @@ export default function MyPage() {
       });
 
       setShowAddRecordModal(false);
+
+      // 데이터 새로고침
+      await loadAllData();
     } catch (error) {
       console.error('건강 기록 추가 실패:', error);
-      toast.error('건강 기록 추가에 실패했습니다.', {
+      toast.error(error.message || '건강 기록 추가에 실패했습니다.', {
         icon: '❌',
         duration: 3000
       });
