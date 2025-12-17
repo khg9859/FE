@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 import toast from 'react-hot-toast';
 
 const PointContext = createContext();
@@ -20,10 +21,14 @@ const REWARD_POLICIES = {
 };
 
 export const PointProvider = ({ children }) => {
-    // 초기 포인트 (localStorage에서 불러오기)
+    const { user } = useAuth();
+
+    // 초기 포인트 (로그인한 사용자의 포인트 사용)
     const [totalPoints, setTotalPoints] = useState(() => {
+        // localStorage에서 먼저 확인
         const saved = localStorage.getItem('userTotalPoints');
-        return saved ? parseInt(saved) : 500; // 기본값 500
+        if (saved) return parseInt(saved);
+        return 0;
     });
 
     // AchievementLog 시뮬레이션 (localStorage)
@@ -32,7 +37,16 @@ export const PointProvider = ({ children }) => {
         return saved ? JSON.parse(saved) : [];
     });
 
-    // 포인트 변경 시 localStorage에 저장
+    // 사용자가 로그인하면 포인트를 user.total_points 또는 mypoints로 설정
+    useEffect(() => {
+        if (user) {
+            const userPoints = user.total_points || user.mypoints || 0;
+            setTotalPoints(userPoints);
+            localStorage.setItem('userTotalPoints', userPoints.toString());
+        }
+    }, [user]);
+
+    // totalPoints가 변경될 때마다 localStorage에 저장
     useEffect(() => {
         localStorage.setItem('userTotalPoints', totalPoints.toString());
     }, [totalPoints]);
@@ -44,23 +58,27 @@ export const PointProvider = ({ children }) => {
 
     // 포인트 추가
     const addPoints = (points, description = '포인트 획득') => {
-        setTotalPoints(prev => prev + points);
+        setTotalPoints(prev => {
+            const newTotal = prev + points;
 
-        // AchievementLog 생성
-        const newLog = {
-            achievement_id: achievementLogs.length + 1,
-            member_id: 1,
-            source_type: 'ETC',
-            points_earned: points,
-            points_snapshot: totalPoints,
-            achieved_at: new Date().toISOString(),
-            description
-        };
-        setAchievementLogs(prev => [newLog, ...prev]);
+            // AchievementLog 생성
+            const newLog = {
+                achievement_id: achievementLogs.length + 1,
+                member_id: 1,
+                source_type: 'ETC',
+                points_earned: points,
+                points_snapshot: newTotal,
+                achieved_at: new Date().toISOString(),
+                description
+            };
+            setAchievementLogs(prev => [newLog, ...prev]);
 
-        toast.success(`${description} (+${points}P)`, {
-            icon: '🎉',
-            duration: 3000
+            toast.success(`${description} (+${points}P)`, {
+                icon: '🎉',
+                duration: 3000
+            });
+
+            return newTotal;
         });
     };
 
@@ -80,28 +98,34 @@ export const PointProvider = ({ children }) => {
         const unrewardedLogs = exerciseLogs.filter(log => !log.achievement_id);
 
         if (unrewardedLogs.length >= policy.condition_value) {
-            // AchievementLog 생성
             const newAchievementId = achievementLogs.length + 1;
-            const newLog = {
-                achievement_id: newAchievementId,
-                member_id: 1,
-                source_type: 'EXERCISE',
-                points_earned: policy.points_awarded,
-                points_snapshot: totalPoints,
-                achieved_at: new Date().toISOString(),
-                description: policy.description
-            };
 
-            setAchievementLogs(prev => [newLog, ...prev]);
-            setTotalPoints(prev => prev + policy.points_awarded);
+            setTotalPoints(prev => {
+                const newTotal = prev + policy.points_awarded;
 
-            toast.success(`🎉 ${policy.description}! +${policy.points_awarded}P`, {
-                duration: 4000,
-                style: {
-                    background: '#10b981',
-                    color: '#fff',
-                    fontWeight: 'bold'
-                }
+                // AchievementLog 생성
+                const newLog = {
+                    achievement_id: newAchievementId,
+                    member_id: 1,
+                    source_type: 'EXERCISE',
+                    points_earned: policy.points_awarded,
+                    points_snapshot: newTotal,
+                    achieved_at: new Date().toISOString(),
+                    description: policy.description
+                };
+
+                setAchievementLogs(prev => [newLog, ...prev]);
+
+                toast.success(`🎉 ${policy.description}! +${policy.points_awarded}P`, {
+                    duration: 4000,
+                    style: {
+                        background: '#10b981',
+                        color: '#fff',
+                        fontWeight: 'bold'
+                    }
+                });
+
+                return newTotal;
             });
 
             return newAchievementId;
@@ -116,26 +140,32 @@ export const PointProvider = ({ children }) => {
 
         if (unrewardedLogs.length >= policy.condition_value) {
             const newAchievementId = achievementLogs.length + 1;
-            const newLog = {
-                achievement_id: newAchievementId,
-                member_id: 1,
-                source_type: 'DIET',
-                points_earned: policy.points_awarded,
-                points_snapshot: totalPoints,
-                achieved_at: new Date().toISOString(),
-                description: policy.description
-            };
 
-            setAchievementLogs(prev => [newLog, ...prev]);
-            setTotalPoints(prev => prev + policy.points_awarded);
+            setTotalPoints(prev => {
+                const newTotal = prev + policy.points_awarded;
 
-            toast.success(`🎉 ${policy.description}! +${policy.points_awarded}P`, {
-                duration: 4000,
-                style: {
-                    background: '#10b981',
-                    color: '#fff',
-                    fontWeight: 'bold'
-                }
+                const newLog = {
+                    achievement_id: newAchievementId,
+                    member_id: 1,
+                    source_type: 'DIET',
+                    points_earned: policy.points_awarded,
+                    points_snapshot: newTotal,
+                    achieved_at: new Date().toISOString(),
+                    description: policy.description
+                };
+
+                setAchievementLogs(prev => [newLog, ...prev]);
+
+                toast.success(`🎉 ${policy.description}! +${policy.points_awarded}P`, {
+                    duration: 4000,
+                    style: {
+                        background: '#10b981',
+                        color: '#fff',
+                        fontWeight: 'bold'
+                    }
+                });
+
+                return newTotal;
             });
 
             return newAchievementId;
@@ -150,26 +180,32 @@ export const PointProvider = ({ children }) => {
 
         if (unrewardedLogs.length >= policy.condition_value) {
             const newAchievementId = achievementLogs.length + 1;
-            const newLog = {
-                achievement_id: newAchievementId,
-                member_id: 1,
-                source_type: 'ATTENDANCE',
-                points_earned: policy.points_awarded,
-                points_snapshot: totalPoints,
-                achieved_at: new Date().toISOString(),
-                description: policy.description
-            };
 
-            setAchievementLogs(prev => [newLog, ...prev]);
-            setTotalPoints(prev => prev + policy.points_awarded);
+            setTotalPoints(prev => {
+                const newTotal = prev + policy.points_awarded;
 
-            toast.success(`🎉 ${policy.description}! +${policy.points_awarded}P`, {
-                duration: 4000,
-                style: {
-                    background: '#10b981',
-                    color: '#fff',
-                    fontWeight: 'bold'
-                }
+                const newLog = {
+                    achievement_id: newAchievementId,
+                    member_id: 1,
+                    source_type: 'ATTENDANCE',
+                    points_earned: policy.points_awarded,
+                    points_snapshot: newTotal,
+                    achieved_at: new Date().toISOString(),
+                    description: policy.description
+                };
+
+                setAchievementLogs(prev => [newLog, ...prev]);
+
+                toast.success(`🎉 ${policy.description}! +${policy.points_awarded}P`, {
+                    duration: 4000,
+                    style: {
+                        background: '#10b981',
+                        color: '#fff',
+                        fontWeight: 'bold'
+                    }
+                });
+
+                return newTotal;
             });
 
             return newAchievementId;
@@ -184,26 +220,32 @@ export const PointProvider = ({ children }) => {
 
         if (unrewardedGoals.length >= policy.condition_value) {
             const newAchievementId = achievementLogs.length + 1;
-            const newLog = {
-                achievement_id: newAchievementId,
-                member_id: 1,
-                source_type: 'GOAL',
-                points_earned: policy.points_awarded,
-                points_snapshot: totalPoints,
-                achieved_at: new Date().toISOString(),
-                description: policy.description
-            };
 
-            setAchievementLogs(prev => [newLog, ...prev]);
-            setTotalPoints(prev => prev + policy.points_awarded);
+            setTotalPoints(prev => {
+                const newTotal = prev + policy.points_awarded;
 
-            toast.success(`🎉 ${policy.description}! +${policy.points_awarded}P`, {
-                duration: 4000,
-                style: {
-                    background: '#10b981',
-                    color: '#fff',
-                    fontWeight: 'bold'
-                }
+                const newLog = {
+                    achievement_id: newAchievementId,
+                    member_id: 1,
+                    source_type: 'GOAL',
+                    points_earned: policy.points_awarded,
+                    points_snapshot: newTotal,
+                    achieved_at: new Date().toISOString(),
+                    description: policy.description
+                };
+
+                setAchievementLogs(prev => [newLog, ...prev]);
+
+                toast.success(`🎉 ${policy.description}! +${policy.points_awarded}P`, {
+                    duration: 4000,
+                    style: {
+                        background: '#10b981',
+                        color: '#fff',
+                        fontWeight: 'bold'
+                    }
+                });
+
+                return newTotal;
             });
 
             return newAchievementId;

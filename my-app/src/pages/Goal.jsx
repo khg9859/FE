@@ -1,33 +1,10 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { usePoints } from "../context/PointContext";
-
-// 더미 목표 데이터
-const DUMMY_GOALS = [
-  {
-    goal_id: 1,
-    member_id: 1,
-    item_name: "벤치프레스 100kg 달성",
-    target_date: "2025-02-28",
-    is_achieved: false
-  },
-  {
-    goal_id: 2,
-    member_id: 1,
-    item_name: "체지방률 15% 이하",
-    target_date: "2025-03-31",
-    is_achieved: false
-  },
-  {
-    goal_id: 3,
-    member_id: 1,
-    item_name: "30일 연속 출석",
-    target_date: "2025-02-15",
-    is_achieved: true
-  }
-];
+import { useAuth } from "../context/AuthContext";
 
 export default function Goal({ isDark = true }) {
+  const { user } = useAuth();
   const { checkGoalBatchReward } = usePoints();
   const [goals, setGoals] = useState([]);
   const [newGoal, setNewGoal] = useState("");
@@ -35,27 +12,27 @@ export default function Goal({ isDark = true }) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // 더미 데이터 로드
+  // 사용자 목표 로드
   useEffect(() => {
-    loadGoals();
-  }, []);
+    if (user) {
+      loadGoals();
+    }
+  }, [user]);
 
   const loadGoals = async () => {
     try {
       setLoading(true);
-
-      // 로컬스토리지에서 먼저 확인
-      const savedGoals = localStorage.getItem('goals');
-      if (savedGoals) {
-        setGoals(JSON.parse(savedGoals));
+      // 서버에서 목표 데이터 가져오기
+      const response = await fetch(`http://localhost:5001/api/goals/${user.member_id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setGoals(data);
       } else {
-        // 없으면 더미 데이터 사용
-        setGoals(DUMMY_GOALS);
-        localStorage.setItem('goals', JSON.stringify(DUMMY_GOALS));
+        setGoals([]);
       }
     } catch (error) {
       console.error('목표 로드 실패:', error);
-      setGoals(DUMMY_GOALS);
+      setGoals([]);
     } finally {
       setLoading(false);
     }
@@ -63,58 +40,74 @@ export default function Goal({ isDark = true }) {
 
   // 목표 추가
   const handleAddGoal = async () => {
-    if (!newGoal.trim() || !targetDate) return;
+    if (!newGoal.trim() || !targetDate) {
+      alert('목표 내용과 목표 기한을 모두 입력해주세요.');
+      return;
+    }
 
     try {
-      const newGoalData = {
-        goal_id: Date.now(),
-        member_id: 1,
+      console.log('목표 추가 요청:', {
+        member_id: user.member_id,
         item_name: newGoal,
-        target_date: targetDate,
-        is_achieved: false,
-        achievement_id: null
-      };
+        target_date: targetDate
+      });
 
-      const updatedGoals = [...goals, newGoalData];
-      setGoals(updatedGoals);
-      localStorage.setItem('goals', JSON.stringify(updatedGoals));
+      // 서버에 목표 추가 요청
+      const response = await fetch('http://localhost:5001/api/goals', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          member_id: user.member_id,
+          item_name: newGoal,
+          target_date: targetDate
+        })
+      });
 
-      // 배치 보상 체크 (목표 2개마다 80P)
-      const achievementId = checkGoalBatchReward(updatedGoals);
+      const data = await response.json();
+      console.log('목표 추가 응답:', data);
 
-      // achievement_id 연결 (2개 달성 시)
-      if (achievementId) {
-        const unrewardedGoals = updatedGoals.filter(g => !g.achievement_id);
-        const goalsToUpdate = unrewardedGoals.slice(0, 2);
-
-        const finalGoals = updatedGoals.map(goal => {
-          if (goalsToUpdate.find(g => g.goal_id === goal.goal_id)) {
-            return { ...goal, achievement_id: achievementId };
-          }
-          return goal;
-        });
-
-        setGoals(finalGoals);
-        localStorage.setItem('goals', JSON.stringify(finalGoals));
+      if (!response.ok) {
+        throw new Error(data.error || '목표 추가 실패');
       }
+
+      // 목표 추가 성공 후 다시 불러오기
+      await loadGoals();
 
       setNewGoal("");
       setTargetDate("");
       setShowAddForm(false);
+      alert('목표가 성공적으로 추가되었습니다!');
     } catch (error) {
       console.error('목표 추가 실패:', error);
-      alert('목표 추가에 실패했습니다.');
+      alert(`목표 추가에 실패했습니다: ${error.message}`);
     }
   };
 
   // 목표 체크 토글
   const toggleGoal = async (goalId) => {
     try {
-      const updatedGoals = goals.map((g) =>
-        g.goal_id === goalId ? { ...g, is_achieved: !g.is_achieved } : g
-      );
-      setGoals(updatedGoals);
-      localStorage.setItem('goals', JSON.stringify(updatedGoals));
+      const goal = goals.find(g => g.goal_id === goalId);
+      if (!goal) return;
+
+      // 서버에 목표 업데이트 요청
+      const response = await fetch(`http://localhost:5001/api/goals/${goalId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          is_achieved: !goal.is_achieved
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('목표 업데이트 실패');
+      }
+
+      // 목표 업데이트 성공 후 다시 불러오기
+      await loadGoals();
     } catch (error) {
       console.error('목표 업데이트 실패:', error);
       alert('목표 업데이트에 실패했습니다.');
@@ -124,9 +117,17 @@ export default function Goal({ isDark = true }) {
   // 목표 삭제
   const deleteGoal = async (goalId) => {
     try {
-      const updatedGoals = goals.filter((g) => g.goal_id !== goalId);
-      setGoals(updatedGoals);
-      localStorage.setItem('goals', JSON.stringify(updatedGoals));
+      // 서버에 목표 삭제 요청
+      const response = await fetch(`http://localhost:5001/api/goals/${goalId}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        throw new Error('목표 삭제 실패');
+      }
+
+      // 목표 삭제 성공 후 다시 불러오기
+      await loadGoals();
     } catch (error) {
       console.error('목표 삭제 실패:', error);
       alert('목표 삭제에 실패했습니다.');

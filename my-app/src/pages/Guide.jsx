@@ -1,22 +1,12 @@
 import { useState, useEffect } from "react";
 import RoutineTab from "./guide/RoutineTab";
 import DietTab from "./guide/DietTab";
-import { v4 as uuidv4 } from "uuid"; // npm install uuid
+import { useAuth } from "../context/AuthContext";
 
 export default function Guide() {
+  const { user } = useAuth();
   const [tab, setTab] = useState("routine");
   const [darkMode, setDarkMode] = useState(false);
-  const [userId, setUserId] = useState("");
-
-  // 유저 고유 ID 저장
-  useEffect(() => {
-    let savedId = localStorage.getItem("userId");
-    if (!savedId) {
-      savedId = uuidv4();
-      localStorage.setItem("userId", savedId);
-    }
-    setUserId(savedId);
-  }, []);
 
   // 다크모드 유지
   useEffect(() => {
@@ -38,13 +28,13 @@ export default function Guide() {
         <h2 className="text-3xl font-bold">헬스 가이드</h2>
         <button
           onClick={() => setDarkMode(!darkMode)}
-          className={`px-4 py-2 rounded-md font-semibold transition ${
+          className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
             darkMode
-              ? "bg-gray-700 hover:bg-gray-600"
-              : "bg-gray-200 hover:bg-gray-300"
+              ? "bg-yellow-500 text-gray-900 hover:bg-yellow-400"
+              : "bg-gray-700 text-white hover:bg-gray-600"
           }`}
         >
-          {darkMode ? "🌙 다크모드 ON" : "☀️ 다크모드 OFF"}
+          {darkMode ? "☀️ 라이트 모드" : "🌙 다크 모드"}
         </button>
       </div>
 
@@ -77,9 +67,9 @@ export default function Guide() {
       </div>
 
       {tab === "routine" ? (
-        <RoutineTab darkMode={darkMode} userId={userId} />
+        <RoutineTab darkMode={darkMode} userId={user?.member_id} />
       ) : (
-        <DietTab darkMode={darkMode} userId={userId} />
+        <DietTab darkMode={darkMode} userId={user?.member_id} />
       )}
     </div>
   );

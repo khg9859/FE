@@ -1,323 +1,344 @@
-# Hansung Gym Management System
+# Hansung Gym Management System - Frontend
 
-> 한성대학교 헬스장 통합 관리 시스템
-> React + MySQL 기반의 회원 중심 헬스장 플랫폼
+> 한성대학교 헬스장 통합 관리 시스템 프론트엔드
+> React 18 + TailwindCSS 기반 SPA
 
 ---
 
-## 프로젝트 개요
+## ✨ 목차
 
-헬스장 회원 통합 관리 시스템으로, 회원을 중심으로 운동 루틴, 식단, 멘토링, 인센티브 등 다양한 기능을 통합 관리할 수 있도록 설계되었습니다.
+- [프로젝트 개요](#프로젝트-개요)
+- [기술 스택](#기술-스택)
+- [주요 기능](#주요-기능)
+- [프로젝트 구조](#프로젝트-구조)
+- [설치 및 실행](#설치-및-실행)
+- [배포](#배포)
+- [API 연동](#api-연동)
 
-### 기술 스택
+---
 
-| 구분 | 내용 |
+## ✨ 프로젝트 개요
+
+한성대학교 헬스장 회원을 위한 통합 관리 시스템의 프론트엔드입니다.
+운동 루틴, 식단, 멘토링, 포인트 시스템 등을 직관적인 UI/UX로 제공합니다.
+
+---
+
+## ✨ 기술 스택
+
+| 구분 | 기술 |
 |------|------|
-| Frontend | React 18 (Create React App) |
-| Styling | TailwindCSS, Framer Motion |
-| Database | MySQL (로컬 연결 방식) |
-| State Management | Context API |
-| UI Framework | Responsive Design |
-| Animation | Framer Motion |
-| Charts | Chart.js |
+| **Framework** | React 19.2.0 |
+| **Routing** | React Router DOM 7.9.5 |
+| **Styling** | TailwindCSS 3.4.18 |
+| **Animation** | Framer Motion 12.23.24 |
+| **Charts** | Chart.js 4.5.1 |
+| **State Management** | Context API |
+| **Notifications** | React Hot Toast 2.6.0 |
+| **HTTP Client** | Fetch API |
 
 ---
 
-## 주요 기능
+## ✨ 주요 기능
 
-### 1. 회원 관리
-- 개인 프로필 및 건강 정보 관리
-- 출석 체크 시스템
-- 포인트 및 뱃지 시스템
+### ✨ **홈페이지**
+- 배경 동영상
+- 포인트 교환소 바로가기
 
-### 2. 운동 관리
-- 운동 기록 추적 (카테고리별 분류)
-- 목표 설정 및 달성률 확인
-- 운동 루틴 가이드
+### ✨ **마이페이지**
+- ✨ 캘린더 기반 기록 표시
+- ✨ 운동 기록 추가/조회
+- ✨ 식단 기록 추가/조회
+- ✨ 체중 변화 그래프 (Chart.js)
+- ✨ 목표 설정 및 관리
+- ✨ 운동 통계 (TOP 3, 부위별 분석)
 
-### 3. 식단 관리
-- 식단 기록 (식사 시간별 분류)
-- 영양 정보 추적
-- 식단 가이드
+### ✨ **교양수업 시간표**
+- ✨ 현재 진행 중인 수업 표시
+- ✨ 헬스장 혼잡도 실시간 표시
+- ✨ 현재 이용 중인 회원 목록
 
-### 4. 건강 기록
-- 체중, 근육량, 체지방률 추적
-- BMI 자동 계산
-- 체중 변화 그래프 (Chart.js)
+### ✨ **멘토링 시스템**
+- ✨ 멘토/멘티 모집 게시판
+- ✨ 매칭 시스템
+- ✨ 프로필 모달
 
-### 5. 멘토링 시스템
-- 멘토/멘티 매칭
-- 멘토링 모집글 작성
-- 매칭 관리 (신청, 수락, 종료)
+### ✨ **헬스 가이드**
+- ✨ 운동 루틴 추천
+- ✨ 식단 추천
 
-### 6. 헬스장 이용 현황
-- 교양수업 시간표 확인
-- 실시간 헬스장 가용성 체크
-- 현재 이용 인원 표시
+### ✨ **포인트/퀘스트**
+- ✨ 퀘스트 시스템
+- ✨ 자동 포인트 지급
 
-### 7. 인센티브 시스템
-- 운동 기록 5회마다 100P 지급
-- 식단 기록 3회마다 50P 지급
-- 출석 10회마다 200P 지급
-- 목표 설정 2개마다 80P 지급
+### ✨ **포인트 교환소**
+- ✨ 25개 보상 상품
+- ✨ 카테고리별 필터링
+- ✨ 교환 내역 관리
 
-### 8. 데이터 시각화
-- Chart.js 기반 체중 변화 차트
-- 요일별 운동 빈도 차트
-- 부위별 운동 분석 (도넛 차트)
-- 운동 성장률 TOP 3
+### ✨ **공지사항**
+- ✨ 포인트 지급 조건 안내
+- ✨ 헬스장 이용 안내
 
 ---
 
-## 실행 방법
-
-### 1. 패키지 설치
-```bash
-npm install
-```
-
-### 2. 데이터베이스 설정
-```bash
-# MySQL 접속
-mysql -u root -p
-
-# 데이터베이스 생성
-CREATE DATABASE hs_health CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE hs_health;
-
-# 스키마 적용
-source my-app/server/sql/HS_Health.sql;
-
-# 더미 데이터 삽입
-source my-app/server/sql/insert_dummy_data.sql;
-```
-
-### 3. 개발 서버 실행
-```bash
-npm start
-```
-
-브라우저에서 `http://localhost:3000` 접속
-
----
-
-## 프로젝트 구조
+## ✨ 프로젝트 구조
 
 ```
-my-app/
+FE/my-app/
 ├── public/
 │   ├── index.html
-│   ├── favicon.ico
-│   ├── logo192.png
-│   ├── logo512.png
-│   ├── manifest.json
-│   ├── robots.txt
-│   └── videos/
-│       └── gym.mp4
-│
+│   ├── videos/
+│   │   └── gym.mp4
+│   └── manifest.json
 ├── src/
 │   ├── assets/
 │   │   └── mentoring/
 │   │       ├── mentor.png
 │   │       ├── mentee.png
 │   │       └── defaultProfile.png
-│   │
 │   ├── components/
 │   │   ├── Navbar.jsx
 │   │   ├── WeightChart.jsx
-│   │   └── DailyRecordCard.jsx
-│   │
+│   │   ├── DailyRecordCard.jsx
+│   │   └── QuestList.jsx
 │   ├── context/
-│   │   ├── ThemeContext.jsx
-│   │   └── PointContext.jsx
-│   │
+│   │   ├── ThemeContext.jsx      # 다크모드 관리
+│   │   └── PointContext.jsx       # 포인트 시스템
 │   ├── pages/
 │   │   ├── Home.jsx
-│   │   ├── MyPage.jsx
-│   │   ├── Goal.jsx
+│   │   ├── MyPage.jsx            # 1900줄 (가장 큰 파일)
 │   │   ├── Class.jsx
 │   │   ├── Notice.jsx
-│   │   ├── Exercise.jsx
 │   │   ├── Incentive.jsx
 │   │   ├── RewardShop.jsx
-│   │   │
-│   │   ├── guide/
-│   │   │   ├── Guide.jsx
-│   │   │   ├── DietTab.jsx
-│   │   │   ├── RoutineTab.jsx
-│   │   │   ├── PostCard.jsx
-│   │   │   └── NewPostModal.jsx
-│   │   │
-│   │   └── mentoring/
-│   │       ├── Mentoring.jsx
-│   │       ├── MentorRecruitTab.jsx
-│   │       ├── MenteeRecruitTab.jsx
-│   │       ├── MatchContext.jsx
-│   │       └── MatchModal.jsx
-│   │
+│   │   ├── Guide.jsx
+│   │   ├── mentoring/
+│   │   │   ├── Mentoring.jsx
+│   │   │   ├── MentorRecruitTab.jsx
+│   │   │   ├── MenteeRecruitTab.jsx
+│   │   │   ├── MatchContext.jsx
+│   │   │   └── MatchModal.jsx
+│   │   └── guide/
+│   │       ├── RoutineTab.jsx
+│   │       └── DietTab.jsx
 │   ├── App.js
 │   ├── App.css
 │   ├── index.js
-│   ├── index.css
-│   ├── reportWebVitals.js
-│   └── setupTests.js
-│
-├── server/
-│   ├── server.js
-│   └── sql/
-│       ├── HS_Health.sql
-│       ├── insert_class_data.sql
-│       ├── insert_dummy_data.sql
-│       └── README.md
-│
+│   └── index.css
 ├── package.json
 ├── tailwind.config.js
-├── postcss.config.js
-├── .gitignore
 └── README.md
 ```
 
 ---
 
-## 데이터베이스 스키마
+## ✨ 설치 및 실행
 
-### 주요 테이블
+### 1. 저장소 클론
 
-- **Member**: 회원 정보 및 포인트
-- **ExerciseList**: 운동 목록 (40개, 카테고리별 분류)
-- **FoodList**: 음식 목록 (45개, 카테고리별 분류)
-- **ExerciseLog**: 운동 기록
-- **DietLog**: 식단 기록
-- **HealthRecord**: 건강 기록 (체중, 근육량, 체지방, BMI)
-- **Attendance**: 출석 기록
-- **AchievementLog**: 성취 로그 및 포인트 획득
-- **Badge**: 뱃지 목록
-- **MemberBadge**: 회원 뱃지 획득 기록
-- **Class**: 교양수업 정보
-- **Class_Schedule**: 수업 시간표
-- **Mentoring**: 멘토링 매칭 정보
-- **Goal**: 목표 설정
-
-### 주요 관계
-
-```
-Member (1) --- (N) ExerciseLog
-Member (1) --- (N) DietLog
-Member (1) --- (N) HealthRecord
-Member (1) --- (N) Attendance
-Member (1) --- (N) AchievementLog
-Member (1) --- (N) MemberBadge
-Member (1) --- (N) Goal
-
-ExerciseLog (N) --- (1) ExerciseList
-DietLog (N) --- (1) FoodList
-AchievementLog (N) --- (1) Badge
+```bash
+git clone https://github.com/hsugym/FE.git
+cd FE/my-app
 ```
 
----
+### 2. 패키지 설치
 
-## API 엔드포인트
+```bash
+npm install
+```
 
-### 교양수업
-- `GET /api/classes` - 모든 교양수업 조회
-- `GET /api/class-schedules/:classId` - 특정 수업 시간표 조회
-- `POST /api/classes` - 새 교양수업 추가
-- `PUT /api/classes/:id` - 수업 정보 수정
-- `DELETE /api/classes/:id` - 수업 삭제
+### 3. 환경 변수 설정 (선택사항)
 
----
+백엔드 API 서버 URL 설정이 필요한 경우 `.env` 파일 생성:
 
-## 주요 기능 상세
+```env
+REACT_APP_API_URL=http://localhost:5000
+```
 
-### 마이페이지 대시보드
+### 4. 개발 서버 실행
 
-#### 나의 요약 섹션 (6개 인사이트 카드)
-1. **최근 활동 요약**: 요일별 운동 빈도 차트
-2. **많이 수행한 운동 TOP 3**: 운동 빈도 기준 순위
-3. **많이 성장한 운동 TOP 3**: 성장률 기준 순위
-4. **부위별 운동 분석**: 도넛 차트로 분포 시각화
-5. **이번달 요약**: 개인화된 성취 요약
-6. **체중 변화**: Chart.js 라인 차트
+```bash
+npm start
+```
 
-#### 캘린더 기능
-- 현재 날짜 강조 (오렌지-레드 그라데이션)
-- 출석 기록 표시 (파란색-보라색 그라디언트)
-- 선택된 날짜 기록 표시
+브라우저에서 자동으로 `http://localhost:3000` 열림
 
-#### 기록 추가
-- 운동 기록: 카테고리별 필터링 (가슴/등/하체/어깨/팔/복근/유산소)
-- 식단 기록: 카테고리별 필터링 (단백질/탄수화물/채소/과일/유제품/보충제/한식)
-- 건강 기록: 체중/근육량/체지방 입력, BMI 자동 계산
+### 5. 프로덕션 빌드
 
-### 멘토링 시스템
+```bash
+npm run build
+```
 
-#### 멘토 모집
-- 멘토 모집글 작성
-- 멘티의 신청 확인 및 수락
-- 매칭 관리
-
-#### 멘티 모집
-- 멘티 모집글 작성
-- 멘토의 신청 확인 및 수락
-- 매칭 관리
-
-### 다크모드 시스템
-
-#### 전역 테마 관리 (ThemeContext)
-- Context API 기반 상태 관리
-- localStorage에 테마 설정 저장
-- HTML 루트 요소에 `dark` 클래스 자동 추가/제거
-
-#### 페이지별 독립 다크모드
-- Class 페이지: `classPageTheme` localStorage 키
-- MyPage: `myPageTheme` localStorage 키
-- Mentoring 페이지: 독립 다크모드
-- Guide 페이지: 독립 다크모드
+빌드된 파일은 `build/` 폴더에 생성됩니다.
 
 ---
 
-## 의존성
+## ✨ 배포
 
-```json
-{
-  "dependencies": {
-    "react": "^18.x.x",
-    "react-dom": "^18.x.x",
-    "react-router-dom": "^6.x.x",
-    "framer-motion": "^10.x.x",
-    "chart.js": "^4.4.1",
-    "react-chartjs-2": "^5.2.0",
-    "react-hot-toast": "^2.4.1",
-    "express": "^4.21.2",
-    "mysql2": "^3.11.5",
-    "cors": "^2.8.5"
-  }
+### Vercel 배포 (추천)
+
+1. [Vercel](https://vercel.com) 계정 생성
+2. GitHub 저장소 연동
+3. 프로젝트 import
+4. 환경 변수 설정 (필요시)
+5. Deploy 클릭
+6. 자동 배포 완료!
+
+**장점:**
+- ✨ 무료
+- ✨ GitHub 푸시 시 자동 배포
+- ✨ HTTPS 자동 적용
+- ✨ CDN 자동 설정
+
+### Netlify 배포
+
+1. [Netlify](https://netlify.com) 계정 생성
+2. GitHub 저장소 연동
+3. Build command: `npm run build`
+4. Publish directory: `build`
+5. Deploy
+
+---
+
+## ✨ API 연동
+
+### 백엔드 연동 방법
+
+현재 프론트엔드는 localStorage를 사용한 더미 데이터로 작동합니다.
+백엔드 API와 연동하려면 다음 단계를 따르세요:
+
+#### 1. API 클라이언트 설정
+
+`src/utils/api.js` 파일 생성:
+
+```javascript
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+export const api = {
+  // 회원
+  getMembers: () => fetch(`${API_BASE_URL}/api/members`).then(res => res.json()),
+  getMember: (id) => fetch(`${API_BASE_URL}/api/members/${id}`).then(res => res.json()),
+
+  // 운동
+  getExerciseList: () => fetch(`${API_BASE_URL}/api/exercises/list`).then(res => res.json()),
+  getExerciseLogs: (memberId) => fetch(`${API_BASE_URL}/api/exercises/logs/${memberId}`).then(res => res.json()),
+  addExerciseLog: (data) => fetch(`${API_BASE_URL}/api/exercises/logs`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).then(res => res.json()),
+
+  // 식단
+  getFoodList: () => fetch(`${API_BASE_URL}/api/diet/list`).then(res => res.json()),
+  getDietLogs: (memberId) => fetch(`${API_BASE_URL}/api/diet/logs/${memberId}`).then(res => res.json()),
+  addDietLog: (data) => fetch(`${API_BASE_URL}/api/diet/logs`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).then(res => res.json()),
+
+  // 포인트
+  getPoints: (memberId) => fetch(`${API_BASE_URL}/api/points/${memberId}`).then(res => res.json()),
+  getAchievements: (memberId) => fetch(`${API_BASE_URL}/api/points/achievements/${memberId}`).then(res => res.json()),
+};
+```
+
+#### 2. 컴포넌트에서 사용
+
+```javascript
+import { api } from '../utils/api';
+import { useEffect, useState } from 'react';
+
+function MyPage() {
+  const [exercises, setExercises] = useState([]);
+
+  useEffect(() => {
+    const memberId = 1; // 로그인한 회원 ID
+    api.getExerciseLogs(memberId)
+      .then(data => setExercises(data))
+      .catch(error => console.error(error));
+  }, []);
+
+  // ...
 }
 ```
 
----
+#### 3. CORS 설정 확인
 
-## 향후 개발 계획
+백엔드에서 CORS가 허용되어 있는지 확인하세요:
 
-- 백엔드 API 서버 구현 (Express.js)
-- 실시간 알림 시스템 (WebSocket)
-- 이미지 업로드 기능
-- 운동/음식 검색 및 필터링 고도화
-- 소셜 기능 (친구, 랭킹)
-- PWA 지원
-- 모바일 앱 (React Native)
-
----
-
-## 알려진 이슈
-
-1. 백엔드 서버 미구현 (현재는 더미 데이터 사용)
-2. 실시간 업데이트 미구현 (WebSocket 필요)
-3. 이미지 업로드 기능 없음
-4. 검색 기능 미구현
+```javascript
+// 백엔드 app.js
+app.use(cors({
+  origin: 'http://localhost:3000', // 프론트엔드 URL
+  credentials: true
+}));
+```
 
 ---
 
-## 라이선스
+## ✨ 디자인 특징
+
+### 다크모드
+- 모든 페이지에서 독립적인 다크모드 지원
+- localStorage에 테마 설정 저장
+
+### 애니메이션
+- Framer Motion을 사용한 페이지 전환
+- 컴포넌트 hover/tap 효과
+
+### 반응형 디자인
+- TailwindCSS 기반
+- 모바일/태블릿/데스크톱 지원
+
+---
+
+## ✨ 데이터 저장
+
+현재는 **localStorage**를 사용하여 데이터를 저장합니다:
+
+- `attendances` - 출석 기록
+- `exerciseLogs` - 운동 기록
+- `dietLogs` - 식단 기록
+- `healthRecords` - 건강 기록
+- `goals` - 목표
+- `userTotalPoints` - 포인���
+- `achievementLogs` - 성취 로그
+
+백엔드 API 연동 시 이 부분을 교체하면 됩니다.
+
+---
+
+## ✨ 포인트 시스템
+
+자동 포인트 지급 조건:
+- ✨ **운동 5회** → 100P
+- ✨ **식단 3회** → 50P
+- ✨ **출석 10회** → 200P
+- ✨ **목표 2개** → 80P
+
+---
+
+## ✨ 라이선스
 
 이 프로젝트는 교육 목적으로 제작되었습니다.
+
+---
+
+## ✨ 관련 링크
+
+- **Frontend**: [https://github.com/hsugym/FE](https://github.com/hsugym/FE)
+- **Backend**: [https://github.com/hsugym/BE](https://github.com/hsugym/BE)
+
+---
+
+## ✨ 개발팀
+
+**Hansung University Gym Team**
+
+---
+
+## ✨ 문의
+
+프로젝트 관련 문의: gym@hansung.ac.kr

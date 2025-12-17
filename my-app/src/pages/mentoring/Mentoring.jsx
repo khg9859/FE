@@ -1,26 +1,18 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { v4 as uuidv4 } from "uuid";
 import MentorRecruitTab from "./MentorRecruitTab";
 import MenteeRecruitTab from "./MenteeRecruitTab";
+import ApplicationsTab from "./ApplicationsTab";
 import { useMatch } from "./MatchContext"; // ✅ Context 가져오기
+import { useAuth } from "../../context/AuthContext";
 import mentorImg from "../../assets/mentoring/mentor.png";
 import menteeImg from "../../assets/mentoring/mentee.png";
 
 export default function Mentoring() {
+  const { user } = useAuth();
   const [tab, setTab] = useState("profile");
   const [darkMode, setDarkMode] = useState(false);
-  const [userId, setUserId] = useState("");
   const { matches } = useMatch(); // ✅ 매칭 상태 감시
-
-  useEffect(() => {
-    let savedId = localStorage.getItem("userId");
-    if (!savedId) {
-      savedId = uuidv4();
-      localStorage.setItem("userId", savedId);
-    }
-    setUserId(savedId);
-  }, []);
 
   useEffect(() => {
     const saved = localStorage.getItem("darkMode");
@@ -50,28 +42,30 @@ export default function Mentoring() {
         <h2 className="text-3xl font-bold">멘토링 신청</h2>
         <button
           onClick={() => setDarkMode(!darkMode)}
-          className={`px-4 py-2 rounded-md font-semibold transition ${
+          className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
             darkMode
-              ? "bg-gray-700 hover:bg-gray-600"
-              : "bg-gray-200 hover:bg-gray-300"
+              ? "bg-yellow-500 text-gray-900 hover:bg-yellow-400"
+              : "bg-gray-700 text-white hover:bg-gray-600"
           }`}
         >
-          {darkMode ? "🌙 다크모드 ON" : "☀️ 다크모드 OFF"}
+          {darkMode ? "☀️ 라이트 모드" : "🌙 다크 모드"}
         </button>
       </div>
 
       {/* 탭 메뉴 */}
-      <div className="flex justify-center space-x-6 mb-8">
+      <div className="flex justify-center space-x-4 mb-8">
         <TabButton tab={tab} setTab={setTab} current="profile" text="내 멘토/멘티" darkMode={darkMode} />
-        <TabButton tab={tab} setTab={setTab} current="mentor" text="멘토 모집" darkMode={darkMode} />
-        <TabButton tab={tab} setTab={setTab} current="mentee" text="멘티 모집" darkMode={darkMode} />
+        <TabButton tab={tab} setTab={setTab} current="mentor" text="멘토" darkMode={darkMode} />
+        <TabButton tab={tab} setTab={setTab} current="mentee" text="멘티" darkMode={darkMode} />
+        <TabButton tab={tab} setTab={setTab} current="applications" text="정보" darkMode={darkMode} />
       </div>
 
       {/* 탭 내용 */}
       <AnimatePresence mode="wait">
-        {tab === "profile" && <MentorMenteeProfile key="profile" darkMode={darkMode} userId={userId} />}
-        {tab === "mentor" && <MentorRecruitTab key="mentor" darkMode={darkMode} userId={userId} />}
-        {tab === "mentee" && <MenteeRecruitTab key="mentee" darkMode={darkMode} userId={userId} />}
+        {tab === "profile" && <MentorMenteeProfile key="profile" darkMode={darkMode} userId={user?.member_id} />}
+        {tab === "mentor" && <MentorRecruitTab key="mentor" darkMode={darkMode} userId={user?.member_id} userName={user?.name} />}
+        {tab === "mentee" && <MenteeRecruitTab key="mentee" darkMode={darkMode} userId={user?.member_id} userName={user?.name} />}
+        {tab === "applications" && <ApplicationsTab key="applications" darkMode={darkMode} userId={user?.member_id} userName={user?.name} />}
       </AnimatePresence>
     </div>
   );
@@ -99,6 +93,7 @@ function TabButton({ tab, setTab, current, text, darkMode }) {
 // ✅ 프로필 카드 섹션
 function MentorMenteeProfile({ darkMode, userId }) {
   const { mentors, mentees, matches } = useMatch();
+  const { user } = useAuth();
   const [modalData, setModalData] = useState(null);
 
   // 내 글 찾기
@@ -113,14 +108,34 @@ function MentorMenteeProfile({ darkMode, userId }) {
     (m) => myMentorPost && m.mentorId === myMentorPost.id && m.status === "active"
   );
 
-  // 멘토 정보
-  const mentorData = myMentorMatch
+  // 매칭된 멘토의 게시글 찾기
+  const matchedMentorPost = myMentorMatch
+    ? mentors.find(m => m.id === myMentorMatch.mentorId)
+    : null;
+
+  // 매칭된 멘티의 게시글 찾기
+  const matchedMenteePost = myMenteeMatch
+    ? mentees.find(m => m.id === myMenteeMatch.menteeId)
+    : null;
+
+  // 멘토 정보 로직
+  // 1. 내가 멘티 글을 썼고 매칭된 멘토가 있으면 → 매칭된 멘토 정보 표시
+  // 2. 내가 멘토 글을 썼으면 → 내 이름만 표시 (isMe: true)
+  // 3. 둘 다 아니면 → "매칭된 멘토 없음"
+  const mentorData = myMenteePost && matchedMentorPost
     ? {
-        name: myMentorMatch.mentorName,
-        career: "한성헬스장 전임 트레이너 (5년차)",
-        specialty: "근비대 및 체형 교정 전문",
-        contact: "mentor@hsu.ac.kr",
+        name: matchedMentorPost.userName,
+        career: matchedMentorPost.career || "-",
+        specialty: matchedMentorPost.specialty || "-",
+        contact: matchedMentorPost.mentor_contact || "-",
         image: mentorImg,
+        isMe: false,
+      }
+    : myMentorPost
+    ? {
+        name: myMentorPost.userName,
+        image: mentorImg,
+        isMe: true,
       }
     : {
         name: "매칭된 멘토 없음",
@@ -128,16 +143,27 @@ function MentorMenteeProfile({ darkMode, userId }) {
         specialty: "-",
         contact: "-",
         image: mentorImg,
+        isMe: false,
       };
 
-  // 멘티 정보
-  const menteeData = myMenteeMatch
+  // 멘티 정보 로직
+  // 1. 내가 멘토 글을 썼고 매칭된 멘티가 있으면 → 매칭된 멘티 정보 표시
+  // 2. 내가 멘티 글을 썼으면 → 내 이름만 표시 (isMe: true)
+  // 3. 둘 다 아니면 → "매칭된 멘티 없음"
+  const menteeData = myMentorPost && matchedMenteePost
     ? {
-        name: myMenteeMatch.menteeName,
-        goal: "체지방 감량 및 식단관리 배우기",
-        interest: "PT 입문 / 식단 루틴 설계",
-        contact: "mentee@hsu.ac.kr",
+        name: matchedMenteePost.userName,
+        goal: matchedMenteePost.goal || "-",
+        interest: matchedMenteePost.interest || "-",
+        contact: matchedMenteePost.mentee_contact || "-",
         image: menteeImg,
+        isMe: false,
+      }
+    : myMenteePost
+    ? {
+        name: myMenteePost.userName,
+        image: menteeImg,
+        isMe: true,
       }
     : {
         name: "매칭된 멘티 없음",
@@ -145,6 +171,7 @@ function MentorMenteeProfile({ darkMode, userId }) {
         interest: "-",
         contact: "-",
         image: menteeImg,
+        isMe: false,
       };
 
   return (
@@ -181,6 +208,8 @@ function MentorMenteeProfile({ darkMode, userId }) {
 
 // ✅ 개별 프로필 카드
 function ProfileCard({ title, data, onView, darkMode }) {
+  const buttonText = data.isMe ? "내 프로필 보기" : `${title} 프로필 보기`;
+
   return (
     <motion.div
       onClick={onView}
@@ -201,7 +230,7 @@ function ProfileCard({ title, data, onView, darkMode }) {
           }}
           className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700"
         >
-          {title} 프로필 보기
+          {buttonText}
         </button>
       </div>
     </motion.div>
@@ -239,13 +268,18 @@ function ProfileModal({ data, onClose, darkMode }) {
             className="w-32 h-32 rounded-full mx-auto object-cover mb-4 border-4 border-blue-500"
           />
           <h3 className="text-2xl font-bold text-center mb-3">{data.name}</h3>
-          <div className="text-sm space-y-2">
-            {data.career && <p><strong>경력:</strong> {data.career}</p>}
-            {data.specialty && <p><strong>전문 분야:</strong> {data.specialty}</p>}
-            {data.goal && <p><strong>목표:</strong> {data.goal}</p>}
-            {data.interest && <p><strong>관심:</strong> {data.interest}</p>}
-            <p><strong>연락처:</strong> {data.contact}</p>
-          </div>
+
+          {data.isMe ? (
+            <p className="text-center text-gray-400">내 프로필입니다.</p>
+          ) : (
+            <div className="text-sm space-y-2">
+              {data.career && <p><strong>경력:</strong> {data.career}</p>}
+              {data.specialty && <p><strong>전문 분야:</strong> {data.specialty}</p>}
+              {data.goal && <p><strong>목표:</strong> {data.goal}</p>}
+              {data.interest && <p><strong>관심:</strong> {data.interest}</p>}
+              {data.contact && <p><strong>연락처:</strong> {data.contact}</p>}
+            </div>
+          )}
         </motion.div>
       </motion.div>
     </AnimatePresence>

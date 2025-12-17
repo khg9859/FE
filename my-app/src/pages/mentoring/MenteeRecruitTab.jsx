@@ -1,56 +1,44 @@
 import { useState } from "react";
 import { useMatch } from "./MatchContext";
-import { v4 as uuidv4 } from "uuid";
-import MatchModal from "./MatchModal";
 
-export default function MenteeRecruitTab({ userId, darkMode }) {
+export default function MenteeRecruitTab({ userId, userName, darkMode }) {
   const {
-    mentees,
     mentors,
-    matches,
+    mentees,
     addMentee,
     deleteMentee,
     requestMatch,
-    acceptMatch,
-    terminateMatch,
   } = useMatch();
 
   const [title, setTitle] = useState("");
-  const [desc, setDesc] = useState(""); // Testing
-  const [modal, setModal] = useState(null);
+  const [desc, setDesc] = useState("");
+  const [goal, setGoal] = useState("");
+  const [interest, setInterest] = useState("");
+  const [menteeContact, setMenteeContact] = useState("");
 
-  // 내 모집글
   const myMenteePost = mentees.find((m) => m.userId === userId);
-
-  // 현재 매칭 상태
-  const activeMatch = matches.find(
-    (m) => myMenteePost && m.menteeId === myMenteePost.id && m.status === "active"
-  );
-  const pendingList = matches.filter(
-    (m) => myMenteePost && m.menteeId === myMenteePost.id && m.status === "pending"
-  );
+  const myMentorPost = mentors.find((m) => m.userId === userId);
 
   // 글 등록
   const handleSubmit = () => {
     if (myMenteePost) return alert("이미 등록된 모집글이 있습니다.");
+    if (!title || !desc) return alert("제목과 소개를 입력해주세요.");
+
     addMentee({
-      id: uuidv4(),
+      id: Date.now(),
       userId,
+      userName: userName || "익명",
       title,
       description: desc,
+      goal: goal || "",
+      interest: interest || "",
+      mentee_contact: menteeContact || "",
     });
     setTitle("");
     setDesc("");
-  };
-
-  // 모달 확인 동작
-  const handleConfirm = (type, target) => {
-    if (!myMenteePost) return;
-    if (type === "accept") acceptMatch(target.mentorId, myMenteePost.id);
-    if (type === "reject") terminateMatch(target.mentorId, myMenteePost.id);
-    if (type === "terminate") terminateMatch(target.mentorId, myMenteePost.id);
-    if (type === "request") requestMatch(target.id, myMenteePost.id, "익명 멘티");
-    setModal(null);
+    setGoal("");
+    setInterest("");
+    setMenteeContact("");
   };
 
   return (
@@ -59,7 +47,7 @@ export default function MenteeRecruitTab({ userId, darkMode }) {
         darkMode ? "bg-gray-800 text-white" : "bg-white text-gray-900"
       }`}
     >
-      <h3 className="text-2xl font-bold text-center mb-6">멘토링 신청 (멘티용)</h3>
+      <h3 className="text-2xl font-bold text-center mb-6">멘티</h3>
 
       {/* ✅ 모집글 등록 */}
       {!myMenteePost && (
@@ -78,6 +66,33 @@ export default function MenteeRecruitTab({ userId, darkMode }) {
             value={desc}
             onChange={(e) => setDesc(e.target.value)}
             className={`border p-2 rounded w-full h-32 resize-none ${
+              darkMode ? "text-black bg-gray-100" : "text-black"
+            }`}
+          />
+          <input
+            type="text"
+            placeholder="목표 (예: 체지방 감량 및 식단관리 배우기)"
+            value={goal}
+            onChange={(e) => setGoal(e.target.value)}
+            className={`border p-2 rounded w-full ${
+              darkMode ? "text-black bg-gray-100" : "text-black"
+            }`}
+          />
+          <input
+            type="text"
+            placeholder="관심사 (예: PT 입문 / 식단 루틴 설계)"
+            value={interest}
+            onChange={(e) => setInterest(e.target.value)}
+            className={`border p-2 rounded w-full ${
+              darkMode ? "text-black bg-gray-100" : "text-black"
+            }`}
+          />
+          <input
+            type="text"
+            placeholder="연락처 (예: mentee@hsu.ac.kr)"
+            value={menteeContact}
+            onChange={(e) => setMenteeContact(e.target.value)}
+            className={`border p-2 rounded w-full ${
               darkMode ? "text-black bg-gray-100" : "text-black"
             }`}
           />
@@ -104,96 +119,60 @@ export default function MenteeRecruitTab({ userId, darkMode }) {
           </div>
           <p className="mt-2 font-semibold">{myMenteePost.title}</p>
           <p className="text-gray-400 mt-1">{myMenteePost.description}</p>
-
-          {/* 대기중 멘토 */}
-          {pendingList.length > 0 && (
-            <div className="mt-4">
-              <h5 className="font-bold mb-2 text-lg">신청 대기중 멘토</h5>
-              <div className="space-y-2">
-                {pendingList.map((mentor) => (
-                  <div
-                    key={mentor.mentorId}
-                    className="flex justify-between border p-2 rounded-md"
-                  >
-                    <span>{mentor.mentorName}</span>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setModal({ type: "accept", target: mentor })}
-                        className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
-                      >
-                        수락
-                      </button>
-                      <button
-                        onClick={() => setModal({ type: "reject", target: mentor })}
-                        className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600"
-                      >
-                        거절
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* 현재 매칭 */}
-          {activeMatch && (
-            <div className="mt-5">
-              <h5 className="text-green-400 font-bold text-lg">매칭된 멘토 ✅</h5>
-              <p>{activeMatch.mentorName}</p>
-              <button
-                onClick={() => setModal({ type: "terminate", target: activeMatch })}
-                className="bg-red-600 text-white px-3 py-1 rounded mt-3 hover:bg-red-700"
-              >
-                매칭 파기
-              </button>
-            </div>
-          )}
+          <div className="mt-2 text-sm">
+            {myMenteePost.goal && <p><strong>목표:</strong> {myMenteePost.goal}</p>}
+            {myMenteePost.interest && <p><strong>관심사:</strong> {myMenteePost.interest}</p>}
+            {myMenteePost.mentee_contact && <p><strong>연락처:</strong> {myMenteePost.mentee_contact}</p>}
+          </div>
         </div>
       )}
 
-      {/* ✅ 멘토 목록 (프로필 카드 형식) */}
+      {/* ✅ 멘티 모집글 목록 (블로그 형식) */}
       <div>
-        <h4 className="text-xl font-bold mb-3">멘토 목록</h4>
-        {mentors.length === 0 && <p>등록된 멘토가 없습니다.</p>}
+        <h4 className="text-xl font-bold mb-3">멘티 모집글 목록</h4>
+        {mentees.filter(m => m.userId !== userId).length === 0 && <p>등록된 멘티 모집글이 없습니다.</p>}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {mentors.map((mentor) => (
+        <div className="space-y-4">
+          {mentees.filter(mentee => mentee.userId !== userId).map((mentee) => (
             <div
-              key={mentor.id}
-              className={`rounded-xl shadow-lg p-5 flex flex-col justify-between transition ${
+              key={mentee.id}
+              className={`rounded-lg shadow-md p-5 ${
                 darkMode ? "bg-gray-700" : "bg-gray-100"
               }`}
             >
-              <div>
-                <h5 className="font-bold text-lg mb-1">{mentor.title}</h5>
-                <p className="text-gray-400 text-sm mb-3">{mentor.description}</p>
-              </div>
-              <button
-                onClick={() => setModal({ type: "request", target: mentor })}
-                className="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700 self-end"
-              >
-                신청하기
-              </button>
+              <h5 className="font-bold text-xl mb-2">{mentee.title}</h5>
+              <p className="text-sm text-gray-400 mb-1">작성자: {mentee.userName}</p>
+              <p className="text-gray-300 mb-3">{mentee.description}</p>
+
+              {mentee.goal && (
+                <p className="text-sm mb-1">
+                  <span className="font-semibold">목표:</span> {mentee.goal}
+                </p>
+              )}
+              {mentee.interest && (
+                <p className="text-sm mb-1">
+                  <span className="font-semibold">관심사:</span> {mentee.interest}
+                </p>
+              )}
+              {mentee.mentee_contact && (
+                <p className="text-sm mb-3">
+                  <span className="font-semibold">연락처:</span> {mentee.mentee_contact}
+                </p>
+              )}
+
+              {/* 신청하기 버튼 - 멘토 글을 쓴 사람만 표시 */}
+              {myMentorPost && (
+                <button
+                  onClick={() => requestMatch(myMentorPost.id, mentee.id, userName)}
+                  className="w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 mt-2"
+                >
+                  신청하기
+                </button>
+              )}
             </div>
           ))}
         </div>
       </div>
-
-      {/* ✅ 모달 */}
-      {modal && (
-        <MatchModal
-          type={modal.type}
-          targetName={
-            modal.target.mentorName ||
-            modal.target.title ||
-            "선택된 사용자"
-          }
-          darkMode={darkMode}
-          onConfirm={() => handleConfirm(modal.type, modal.target)}
-          onCancel={() => setModal(null)}
-        />
-      )}
     </div>
   );
 }
