@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import PostCard from "./PostCard";
 import NewPostModal from "./NewPostModal";
+import { getApiUrl } from "../../config/api";
 
 export default function RoutineTab({ darkMode, userId }) {
   const [routines, setRoutines] = useState([]); // API에서 가져온 루틴
@@ -30,7 +31,7 @@ export default function RoutineTab({ darkMode, userId }) {
   useEffect(() => {
     const fetchRoutines = async () => {
       try {
-        const response = await fetch('http://localhost:5001/api/guide/workouts');
+        const response = await fetch(getApiUrl('/api/guide/workouts'));
         if (response.ok) {
           const data = await response.json();
           setRoutines(data);
@@ -65,9 +66,9 @@ export default function RoutineTab({ darkMode, userId }) {
     difficulty: routine.difficulty,
     author: "헬스장 관리자",
     authorId: "admin",
-    likes: 0,
+    likes: routine.likes || 0,
     isOfficial: true, // 공식 루틴 표시
-    createdAt: routine.created_at
+    createdAt: routine.created_at || new Date().toISOString()
   });
 
   // 필터링된 루틴
@@ -83,30 +84,28 @@ export default function RoutineTab({ darkMode, userId }) {
 
   // 좋아요 기능
   const handleLike = (id) => {
-    // 공식 루틴은 좋아요만 가능
-    if (id.startsWith('routine-')) {
-      if (likedPosts.includes(id)) {
-        alert("이미 좋아요를 누른 게시글입니다 👍");
-        return;
-      }
-      setLikedPosts([...likedPosts, id]);
-      return;
-    }
-
-    // 사용자 게시글 좋아요
-    const post = userPosts.find(p => p.id === id);
-    if (post && post.authorId === userId) {
-      alert("본인이 작성한 게시글에는 좋아요를 누를 수 없습니다 😅");
-      return;
-    }
-
+    // 이미 좋아요를 눌렀는지 확인
     if (likedPosts.includes(id)) {
       alert("이미 좋아요를 누른 게시글입니다 👍");
       return;
     }
 
+    // 공식 루틴 좋아요
+    if (id.startsWith('routine-')) {
+      setLikedPosts([...likedPosts, id]);
+      // TODO: API로 좋아요 수 증가 요청
+      return;
+    }
+
+    // 사용자 게시글 좋아요
+    const post = userPosts.find(p => p.id === id);
+    if (post && String(post.authorId) === String(userId)) {
+      alert("본인이 작성한 게시글에는 좋아요를 누를 수 없습니다 😅");
+      return;
+    }
+
     const updated = userPosts.map((p) =>
-      p.id === id ? { ...p, likes: p.likes + 1 } : p
+      p.id === id ? { ...p, likes: (p.likes || 0) + 1 } : p
     );
     setUserPosts(updated);
     setLikedPosts([...likedPosts, id]);

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import PostCard from "./PostCard";
 import NewPostModal from "./NewPostModal";
+import { getApiUrl } from "../../config/api";
 
 export default function DietTab({ darkMode, userId }) {
   const [diets, setDiets] = useState([]); // API에서 가져온 식단
@@ -30,7 +31,7 @@ export default function DietTab({ darkMode, userId }) {
   useEffect(() => {
     const fetchDiets = async () => {
       try {
-        const response = await fetch('http://localhost:5001/api/guide/diets');
+        const response = await fetch(getApiUrl('/api/guide/diets'));
         if (response.ok) {
           const data = await response.json();
           setDiets(data);
@@ -65,9 +66,9 @@ export default function DietTab({ darkMode, userId }) {
     category: diet.category,
     author: "헬스장 관리자",
     authorId: "admin",
-    likes: 0,
+    likes: diet.likes || 0,
     isOfficial: true, // 공식 식단 표시
-    createdAt: diet.created_at
+    createdAt: diet.created_at || new Date().toISOString()
   });
 
   // 필터링된 식단
@@ -83,30 +84,28 @@ export default function DietTab({ darkMode, userId }) {
 
   // 좋아요 기능
   const handleLike = (id) => {
-    // 공식 식단은 좋아요만 가능
-    if (id.startsWith('diet-')) {
-      if (likedPosts.includes(id)) {
-        alert("이미 좋아요를 누른 게시글입니다 👍");
-        return;
-      }
-      setLikedPosts([...likedPosts, id]);
-      return;
-    }
-
-    // 사용자 게시글 좋아요
-    const post = userPosts.find(p => p.id === id);
-    if (post && post.authorId === userId) {
-      alert("본인이 작성한 게시글에는 좋아요를 누를 수 없습니다 😅");
-      return;
-    }
-
+    // 이미 좋아요를 눌렀는지 확인
     if (likedPosts.includes(id)) {
       alert("이미 좋아요를 누른 게시글입니다 👍");
       return;
     }
 
+    // 공식 식단 좋아요
+    if (id.startsWith('diet-')) {
+      setLikedPosts([...likedPosts, id]);
+      // TODO: API로 좋아요 수 증가 요청
+      return;
+    }
+
+    // 사용자 게시글 좋아요
+    const post = userPosts.find(p => p.id === id);
+    if (post && String(post.authorId) === String(userId)) {
+      alert("본인이 작성한 게시글에는 좋아요를 누를 수 없습니다 😅");
+      return;
+    }
+
     const updated = userPosts.map((p) =>
-      p.id === id ? { ...p, likes: p.likes + 1 } : p
+      p.id === id ? { ...p, likes: (p.likes || 0) + 1 } : p
     );
     setUserPosts(updated);
     setLikedPosts([...likedPosts, id]);
