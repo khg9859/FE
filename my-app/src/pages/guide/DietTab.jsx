@@ -84,14 +84,13 @@ export default function DietTab({ darkMode, userId }) {
 
   // 좋아요 기능
   const handleLike = (id) => {
-    // 이미 좋아요를 눌렀는지 확인
-    if (likedPosts.includes(id)) {
-      alert("이미 좋아요를 누른 게시글입니다 👍");
-      return;
-    }
-
     // 공식 식단 좋아요
     if (id.startsWith('diet-')) {
+      // 이미 좋아요를 눌렀는지 확인
+      if (likedPosts.includes(id)) {
+        alert("이미 좋아요를 누른 게시글입니다 👍");
+        return;
+      }
       setLikedPosts([...likedPosts, id]);
       // TODO: API로 좋아요 수 증가 요청
       return;
@@ -99,8 +98,16 @@ export default function DietTab({ darkMode, userId }) {
 
     // 사용자 게시글 좋아요
     const post = userPosts.find(p => p.id === id);
-    if (post && String(post.authorId) === String(userId)) {
+    if (!post) return;
+
+    if (String(post.authorId) === String(userId)) {
       alert("본인이 작성한 게시글에는 좋아요를 누를 수 없습니다 😅");
+      return;
+    }
+
+    // 이미 좋아요를 눌렀는지 확인
+    if (likedPosts.includes(id)) {
+      alert("이미 좋아요를 누른 게시글입니다 👍");
       return;
     }
 
@@ -146,13 +153,12 @@ export default function DietTab({ darkMode, userId }) {
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-2 rounded-md font-semibold transition ${
-                selectedCategory === cat
+              className={`px-4 py-2 rounded-md font-semibold transition ${selectedCategory === cat
                   ? "bg-blue-600 text-white"
                   : darkMode
                     ? "bg-gray-700 text-gray-200 hover:bg-gray-600"
                     : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              }`}
+                }`}
             >
               {cat === "all" ? "전체" : cat}
             </button>
@@ -169,9 +175,8 @@ export default function DietTab({ darkMode, userId }) {
 
       {/* 게시글 카드 목록 */}
       <div
-        className={`grid grid-cols-1 md:grid-cols-2 gap-6 ${
-          darkMode ? "text-gray-100" : "text-gray-800"
-        }`}
+        className={`grid grid-cols-1 md:grid-cols-2 gap-6 ${darkMode ? "text-gray-100" : "text-gray-800"
+          }`}
       >
         {allPosts.map((p) => (
           <PostCard

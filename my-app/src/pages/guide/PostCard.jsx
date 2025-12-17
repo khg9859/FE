@@ -1,13 +1,12 @@
 export default function PostCard({ post, onLike, onDelete, darkMode, userId, isLiked }) {
-  const isOwner = post.authorId === userId;
+  const isOwner = String(post.authorId) === String(userId);
 
   return (
     <div
-      className={`p-6 rounded-lg shadow hover:shadow-lg transition ${
-        darkMode
+      className={`p-6 rounded-lg shadow hover:shadow-lg transition ${darkMode
           ? "bg-gray-800 text-white"
           : "bg-white text-gray-900 border border-gray-200"
-      }`}
+        }`}
     >
       {/* 헤더 */}
       <div className="flex justify-between items-start mb-3">
@@ -22,9 +21,8 @@ export default function PostCard({ post, onLike, onDelete, darkMode, userId, isL
           </div>
           <div className="flex items-center gap-2">
             <span
-              className={`text-sm px-2 py-1 rounded-md ${
-                darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-700"
-              }`}
+              className={`text-sm px-2 py-1 rounded-md ${darkMode ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-700"
+                }`}
             >
               #{post.category || "추천"}
             </span>
@@ -37,11 +35,10 @@ export default function PostCard({ post, onLike, onDelete, darkMode, userId, isL
         {/* 좋아요 버튼을 상단으로 이동 */}
         <button
           onClick={onLike}
-          className={`px-4 py-2 rounded-md transition whitespace-nowrap ml-4 ${
-            isLiked
+          className={`px-4 py-2 rounded-md transition whitespace-nowrap ml-4 ${isLiked
               ? "bg-pink-600 text-white"
               : "bg-pink-500 text-white hover:bg-pink-600"
-          }`}
+            }`}
         >
           {isLiked ? "❤️ " + (post.likes || 0) : `❤️ ${post.likes || 0}`}
         </button>
@@ -64,9 +61,8 @@ export default function PostCard({ post, onLike, onDelete, darkMode, userId, isL
             {post.exercises.map((exercise, index) => (
               <div
                 key={index}
-                className={`p-3 rounded-md ${
-                  darkMode ? "bg-gray-700" : "bg-gray-50"
-                }`}
+                className={`p-3 rounded-md ${darkMode ? "bg-gray-700" : "bg-gray-50"
+                  }`}
               >
                 <div className="font-medium">
                   {exercise.name} - {exercise.sets}세트 × {exercise.reps}
@@ -102,9 +98,8 @@ export default function PostCard({ post, onLike, onDelete, darkMode, userId, isL
             {post.meals.map((meal, index) => (
               <div
                 key={index}
-                className={`p-3 rounded-md ${
-                  darkMode ? "bg-gray-700" : "bg-gray-50"
-                }`}
+                className={`p-3 rounded-md ${darkMode ? "bg-gray-700" : "bg-gray-50"
+                  }`}
               >
                 {/* 사용자 작성 식단 (간단한 구조) */}
                 {meal.time && meal.menu && !meal.meal && (
@@ -148,9 +143,8 @@ export default function PostCard({ post, onLike, onDelete, darkMode, userId, isL
                     )}
 
                     {meal.total_calories && (
-                      <div className={`text-sm font-semibold pt-2 border-t ${
-                        darkMode ? "border-gray-600 text-gray-300" : "border-gray-300 text-gray-700"
-                      }`}>
+                      <div className={`text-sm font-semibold pt-2 border-t ${darkMode ? "border-gray-600 text-gray-300" : "border-gray-300 text-gray-700"
+                        }`}>
                         소계: {meal.total_calories}kcal
                       </div>
                     )}
@@ -160,9 +154,8 @@ export default function PostCard({ post, onLike, onDelete, darkMode, userId, isL
             ))}
           </div>
           {post.calories && (
-            <div className={`mt-3 p-2 rounded-md text-center font-bold ${
-              darkMode ? "bg-gray-600 text-gray-100" : "bg-gray-200 text-gray-800"
-            }`}>
+            <div className={`mt-3 p-2 rounded-md text-center font-bold ${darkMode ? "bg-gray-600 text-gray-100" : "bg-gray-200 text-gray-800"
+              }`}>
               총 칼로리: {post.calories}kcal
             </div>
           )}
