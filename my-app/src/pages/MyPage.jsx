@@ -632,14 +632,40 @@ export default function MyPage() {
         setDietLogs([]);
       }
 
+      // 서버에서 운동 리스트 가져오기
+      try {
+        const exerciseListResponse = await fetch(getApiUrl('/api/exercises/list'));
+        if (exerciseListResponse.ok) {
+          const exerciseListData = await exerciseListResponse.json();
+          setExerciseList(exerciseListData);
+        } else {
+          setExerciseList(DUMMY_EXERCISE_LIST);
+        }
+      } catch (error) {
+        console.error('운동 리스트 로드 실패:', error);
+        setExerciseList(DUMMY_EXERCISE_LIST);
+      }
+
+      // 서버에서 음식 리스트 가져오기
+      try {
+        const foodListResponse = await fetch(getApiUrl('/api/diet/list'));
+        if (foodListResponse.ok) {
+          const foodListData = await foodListResponse.json();
+          setFoodList(foodListData);
+        } else {
+          setFoodList(DUMMY_FOOD_LIST);
+        }
+      } catch (error) {
+        console.error('음식 리스트 로드 실패:', error);
+        setFoodList(DUMMY_FOOD_LIST);
+      }
+
       // 나머지는 더미 데이터 사용
       setHealthRecords(DUMMY_HEALTH_RECORDS);
       setPointHistory(DUMMY_POINT_HISTORY);
       setPointExchanges(DUMMY_POINT_EXCHANGES);
       setBadges(DUMMY_BADGES);
       setMemberBadges(DUMMY_MEMBER_BADGES);
-      setExerciseList(DUMMY_EXERCISE_LIST);
-      setFoodList(DUMMY_FOOD_LIST);
     } catch (error) {
       console.error('데이터 로드 실패:', error);
     } finally {
@@ -724,6 +750,39 @@ export default function MyPage() {
     } catch (error) {
       console.error('식단 기록 추가 실패:', error);
       toast.error('식단 기록 추가에 실패했습니다.', {
+        icon: '❌',
+        duration: 3000
+      });
+    }
+  };
+
+  // 건강 기록 추가
+  const addHealthRecord = async (healthData) => {
+    try {
+      // 현재는 localStorage에 저장 (나중에 서버 API로 변경 가능)
+      const newRecord = {
+        record_id: Date.now(),
+        member_id: currentUser.member_id,
+        measured_at: new Date().toISOString(),
+        height: healthData.height,
+        weight: healthData.weight,
+        muscle_mass: healthData.muscle,
+        body_fat: healthData.fat
+      };
+
+      const updatedRecords = [newRecord, ...healthRecords];
+      setHealthRecords(updatedRecords);
+      localStorage.setItem('healthRecords', JSON.stringify(updatedRecords));
+
+      toast.success('건강 기록이 추가되었습니다!', {
+        icon: '📊',
+        duration: 2000
+      });
+
+      setShowAddRecordModal(false);
+    } catch (error) {
+      console.error('건강 기록 추가 실패:', error);
+      toast.error('건강 기록 추가에 실패했습니다.', {
         icon: '❌',
         duration: 3000
       });
