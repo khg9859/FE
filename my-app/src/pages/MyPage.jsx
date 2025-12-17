@@ -17,6 +17,7 @@ import DailyRecordCard from "../components/DailyRecordCard";
 import { usePoints } from "../context/PointContext";
 import { useAuth } from "../context/AuthContext";
 import toast from 'react-hot-toast';
+import goalIcon from '../assets/icons/goal.png';
 
 // Chart.js 등록
 ChartJS.register(
@@ -1562,7 +1563,7 @@ export default function MyPage() {
         className="fixed right-6 bottom-6 w-16 h-16 bg-gradient-to-r from-orange-500 to-yellow-500 rounded-full flex items-center justify-center z-40 shadow-lg hover:shadow-orange-500/50 transition-all"
       >
         <img
-          src={require('../assets/icons/goal.png')}
+          src={goalIcon}
           alt="목표"
           className="w-10 h-10"
         />
