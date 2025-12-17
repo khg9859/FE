@@ -37,7 +37,7 @@ export default function DailyRecordCard({ date, records, isDark, onClose }) {
                 {/* 운동 기록 */}
                 <div>
                     <h4 className="text-lg font-bold text-blue-400 mb-3 flex items-center gap-2">
-                        <span className="text-2xl">💪</span> 운동 기록
+                        <span className="text-2xl"></span> 운동 기록
                         <span className="text-sm font-normal text-gray-400">({exercises.length}개)</span>
                     </h4>
                     {exercises.length > 0 ? (
@@ -87,7 +87,7 @@ export default function DailyRecordCard({ date, records, isDark, onClose }) {
                 {/* 식단 기록 */}
                 <div>
                     <h4 className="text-lg font-bold text-green-400 mb-3 flex items-center gap-2">
-                        <span className="text-2xl">🍽️</span> 식단 기록
+                        <span className="text-2xl"></span> 식단 기록
                         <span className="text-sm font-normal text-gray-400">({diets.length}개)</span>
                     </h4>
                     {diets.length > 0 ? (
@@ -146,7 +146,7 @@ export default function DailyRecordCard({ date, records, isDark, onClose }) {
                 {/* 건강 기록 */}
                 <div>
                     <h4 className="text-lg font-bold text-red-400 mb-3 flex items-center gap-2">
-                        <span className="text-2xl">❤️</span> 건강 기록
+                        <span className="text-2xl"></span> 건강 기록
                         <span className="text-sm font-normal text-gray-400">({health.length}개)</span>
                     </h4>
                     {health.length > 0 ? (

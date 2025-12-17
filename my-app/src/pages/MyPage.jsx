@@ -495,8 +495,14 @@ export default function MyPage() {
     // 오늘 이미 출석했는지 확인
     const today = new Date().toISOString().split('T')[0];
     const alreadyCheckedIn = attendances.some(a => {
-      const attendDate = new Date(a.entered_at).toISOString().split('T')[0];
-      return attendDate === today;
+      if (!a.entered_at) return false;
+      try {
+        const attendDate = new Date(a.entered_at);
+        if (isNaN(attendDate.getTime())) return false;
+        return attendDate.toISOString().split('T')[0] === today;
+      } catch (error) {
+        return false;
+      }
     });
 
     if (alreadyCheckedIn) {
@@ -521,23 +527,9 @@ export default function MyPage() {
       });
 
       if (!response.ok) {
-        throw new Error('출석 체크 실패');
+        const errorData = await response.json();
+        throw new Error(errorData.error || '출석 체크 실패');
       }
-
-      const data = await response.json();
-
-      // 새로운 출석 데이터 생성
-      const newAttendance = {
-        attendance_id: data.attendance_id,
-        member_id: currentUser.member_id,
-        entered_at: new Date().toISOString(),
-        left_at: null,
-        attendance_type: '헬스장',
-        achievement_id: null
-      };
-
-      const updatedAttendances = [...attendances, newAttendance];
-      setAttendances(updatedAttendances);
 
       // 출석 성공 알림
       toast.success('출석 체크 완료!', {
@@ -545,26 +537,15 @@ export default function MyPage() {
         duration: 2000
       });
 
-      // 배치 보상 체크 (출석 10회마다 200P)
-      const achievementId = checkAttendanceBatchReward(updatedAttendances);
-
-      // achievement_id 연결 (10회 달성 시)
-      if (achievementId) {
-        const unrewardedLogs = updatedAttendances.filter(log => !log.achievement_id);
-        const logsToUpdate = unrewardedLogs.slice(0, 10);
-
-        const finalAttendances = updatedAttendances.map(attendance => {
-          if (logsToUpdate.find(a => a.attendance_id === attendance.attendance_id)) {
-            return { ...attendance, achievement_id: achievementId };
-          }
-          return attendance;
-        });
-
-        setAttendances(finalAttendances);
+      // 서버에서 최신 출석 데이터 다시 가져오기
+      const attendanceResponse = await fetch(`http://localhost:5001/api/attendance/${currentUser.member_id}`);
+      if (attendanceResponse.ok) {
+        const attendanceData = await attendanceResponse.json();
+        setAttendances(attendanceData);
       }
     } catch (error) {
       console.error('출석 체크 오류:', error);
-      toast.error('출석 체크에 실패했습니다.', {
+      toast.error(error.message || '출석 체크에 실패했습니다.', {
         icon: '❌',
         duration: 3000
       });
@@ -584,22 +565,14 @@ export default function MyPage() {
   const [exerciseList, setExerciseList] = useState([]);
   const [foodList, setFoodList] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isDark, setIsDark] = useState(() => {
-    const saved = localStorage.getItem('myPageTheme');
-    return saved ? saved === 'dark' : true;
-  });
+  const [isDark] = useState(true); // 다크모드 고정
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
   const [showPointModal, setShowPointModal] = useState(false);
   const [showBadgeModal, setShowBadgeModal] = useState(false);
   const [showAddRecordModal, setShowAddRecordModal] = useState(false);
-  const [recordType, setRecordType] = useState('exercise'); // 'exercise', 'diet', 'health'
   const [showGoalPanel, setShowGoalPanel] = useState(false);
-
-  useEffect(() => {
-    localStorage.setItem('myPageTheme', isDark ? 'dark' : 'light');
-  }, [isDark]);
 
   // 실제 사용자 데이터 로드
   useEffect(() => {
@@ -629,38 +602,14 @@ export default function MyPage() {
         setAttendances([]);
       }
 
-      // 뱃지 데이터 가져오기
-      try {
-        // 모든 뱃지 목록
-        const badgesResponse = await fetch('http://localhost:5001/api/badges');
-        if (badgesResponse.ok) {
-          const badgesData = await badgesResponse.json();
-          // 아이콘 추가
-          const badgesWithIcons = badgesData.map(badge => ({
-            ...badge,
-            icon: badge.badge_icon || getBadgeIcon(badge.badge_name)
-          }));
-          setBadges(badgesWithIcons);
-        }
-
-        // 내가 획득한 뱃지
-        const memberBadgesResponse = await fetch(`http://localhost:5001/api/badges/member/${user.member_id}`);
-        if (memberBadgesResponse.ok) {
-          const memberBadgesData = await memberBadgesResponse.json();
-          setMemberBadges(memberBadgesData);
-        }
-      } catch (error) {
-        console.error('뱃지 데이터 로드 실패:', error);
-        setBadges([]);
-        setMemberBadges([]);
-      }
-
-      // 빈 데이터로 초기화 (실제 API 연동 시 백엔드에서 가져올 데이터)
-      setExerciseLogs([]);
-      setDietLogs([]);
-      setHealthRecords([]);
-      setPointHistory([]);
-      setPointExchanges([]);
+      // 나머지는 더미 데이터 사용 (나의 요약용)
+      setExerciseLogs(DUMMY_EXERCISE_LOGS);
+      setDietLogs(DUMMY_DIET_LOGS);
+      setHealthRecords(DUMMY_HEALTH_RECORDS);
+      setPointHistory(DUMMY_POINT_HISTORY);
+      setPointExchanges(DUMMY_POINT_EXCHANGES);
+      setBadges(DUMMY_BADGES);
+      setMemberBadges(DUMMY_MEMBER_BADGES);
       setExerciseList(DUMMY_EXERCISE_LIST);
       setFoodList(DUMMY_FOOD_LIST);
     } catch (error) {
@@ -671,105 +620,124 @@ export default function MyPage() {
   };
 
   // 기록 추가 모달 열기
-  const openAddRecordModal = (type) => {
-    setRecordType(type);
+  const openAddRecordModal = () => {
     setShowAddRecordModal(true);
   };
 
   // 운동 기록 추가
-  const addExerciseLog = (exerciseId, duration) => {
-    const exercise = exerciseList.find(e => e.exercise_id === exerciseId);
-    if (!exercise) return;
-
-    const newLog = {
-      exercise_log_id: exerciseLogs.length + 1,
-      member_id: currentUser.member_id,
-      exercise_id: exerciseId,
-      performed_at: new Date().toISOString(),
-      exercise_name: exercise.name,
-      duration_minutes: duration,
-      achievement_id: null
-    };
-
-    const updatedLogs = [...exerciseLogs, newLog];
-    setExerciseLogs(updatedLogs);
-
-    // 배치 보상 체크 (운동 5회마다)
-    const achievementId = checkExerciseBatchReward(updatedLogs);
-
-    // achievement_id 연결 (5회 달성 시)
-    if (achievementId) {
-      const unrewardedLogs = updatedLogs.filter(log => !log.achievement_id);
-      const logsToUpdate = unrewardedLogs.slice(0, 5);
-
-      const finalLogs = updatedLogs.map(log => {
-        if (logsToUpdate.find(l => l.exercise_log_id === log.exercise_log_id)) {
-          return { ...log, achievement_id: achievementId };
-        }
-        return log;
+  const addExerciseLog = async (exerciseId, duration) => {
+    try {
+      // 서버에 운동 기록 추가 요청
+      const response = await fetch('http://localhost:5001/api/exercises/logs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          member_id: currentUser.member_id,
+          exercise_id: exerciseId,
+          duration_minutes: duration,
+          performed_at: new Date()
+        })
       });
 
-      setExerciseLogs(finalLogs);
-    }
+      if (!response.ok) {
+        throw new Error('운동 기록 추가 실패');
+      }
 
-    setShowAddRecordModal(false);
+      toast.success('운동 기록이 추가되었습니다!', {
+        icon: '💪',
+        duration: 2000
+      });
+
+      setShowAddRecordModal(false);
+
+      // 데이터 새로고침은 나중에 구현 (현재는 더미 데이터 사용 중)
+    } catch (error) {
+      console.error('운동 기록 추가 실패:', error);
+      toast.error('운동 기록 추가에 실패했습니다.', {
+        icon: '❌',
+        duration: 3000
+      });
+    }
   };
 
   // 식단 기록 추가
-  const addDietLog = (foodId, mealType) => {
-    const food = foodList.find(f => f.food_id === foodId);
-    if (!food) return;
-
-    const newLog = {
-      diet_log_id: dietLogs.length + 1,
-      member_id: currentUser.member_id,
-      food_id: foodId,
-      ate_at: new Date().toISOString(),
-      meal_type: mealType,
-      food_name: food.name,
-      calories: food.calories,
-      achievement_id: null
-    };
-
-    const updatedLogs = [...dietLogs, newLog];
-    setDietLogs(updatedLogs);
-
-    // 배치 보상 체크 (식단 3회마다)
-    const achievementId = checkDietBatchReward(updatedLogs);
-
-    // achievement_id 연결 (3회 달성 시)
-    if (achievementId) {
-      const unrewardedLogs = updatedLogs.filter(log => !log.achievement_id);
-      const logsToUpdate = unrewardedLogs.slice(0, 3);
-
-      const finalLogs = updatedLogs.map(log => {
-        if (logsToUpdate.find(l => l.diet_log_id === log.diet_log_id)) {
-          return { ...log, achievement_id: achievementId };
-        }
-        return log;
+  const addDietLog = async (foodId, mealType) => {
+    try {
+      // 서버에 식단 기록 추가 요청
+      const response = await fetch('http://localhost:5001/api/diet/logs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          member_id: currentUser.member_id,
+          food_id: foodId,
+          meal_type: mealType,
+          ate_at: new Date()
+        })
       });
 
-      setDietLogs(finalLogs);
-    }
+      if (!response.ok) {
+        throw new Error('식단 기록 추가 실패');
+      }
 
-    setShowAddRecordModal(false);
+      toast.success('식단 기록이 추가되었습니다!', {
+        icon: '🍽️',
+        duration: 2000
+      });
+
+      setShowAddRecordModal(false);
+
+      // 데이터 새로고침은 나중에 구현 (현재는 더미 데이터 사용 중)
+    } catch (error) {
+      console.error('식단 기록 추가 실패:', error);
+      toast.error('식단 기록 추가에 실패했습니다.', {
+        icon: '❌',
+        duration: 3000
+      });
+    }
   };
 
   // 건강 기록 추가
-  const addHealthRecord = (data) => {
-    const newRecord = {
-      record_id: healthRecords.length + 1,
-      member_id: currentUser.member_id,
-      measured_at: new Date().toISOString().split('T')[0],
-      height_cm: data.height,
-      weight_kg: data.weight,
-      muscle_mass_kg: data.muscle,
-      fat_mass_kg: data.fat,
-      bmi: (data.weight / ((data.height / 100) ** 2)).toFixed(1)
-    };
+  const addHealthRecord = async (data) => {
+    try {
+      // 서버에 건강 기록 추가 요청
+      const response = await fetch('http://localhost:5001/api/health', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          member_id: currentUser.member_id,
+          height_cm: data.height,
+          weight_kg: data.weight,
+          muscle_mass_kg: data.muscle,
+          fat_mass_kg: data.fat,
+          measured_at: new Date()
+        })
+      });
 
-    setHealthRecords([...healthRecords, newRecord]);
-    setShowAddRecordModal(false);
+      if (!response.ok) {
+        throw new Error('건강 기록 추가 실패');
+      }
+
+      toast.success('건강 기록이 추가되었습니다!', {
+        icon: '❤️',
+        duration: 2000
+      });
+
+      setShowAddRecordModal(false);
+
+      // 데이터 새로고침은 나중에 구현 (현재는 더미 데이터 사용 중)
+    } catch (error) {
+      console.error('건강 기록 추가 실패:', error);
+      toast.error('건강 기록 추가에 실패했습니다.', {
+        icon: '❌',
+        duration: 3000
+      });
+    }
   };
 
   // 캘린더 생성
@@ -855,13 +823,13 @@ export default function MyPage() {
 
   if (loading) {
     return (
-      <div className={`min-h-screen ${isDark ? 'bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white' : 'bg-gradient-to-br from-blue-50 via-white to-purple-50 text-gray-900'} flex items-center justify-center`}>
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           className="text-center"
         >
-          <div className={`inline-block animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 ${isDark ? 'border-blue-500' : 'border-blue-600'} mb-4`}></div>
+          <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500 mb-4"></div>
           <div className="text-xl font-semibold">로딩 중...</div>
         </motion.div>
       </div>
@@ -870,7 +838,7 @@ export default function MyPage() {
 
   if (!currentUser) {
     return (
-      <div className={`min-h-screen ${isDark ? 'bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white' : 'bg-gradient-to-br from-blue-50 via-white to-purple-50 text-gray-900'} flex items-center justify-center`}>
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -884,57 +852,32 @@ export default function MyPage() {
   }
 
   return (
-    <div className={`min-h-screen ${isDark ? 'bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white' : 'bg-gradient-to-br from-blue-50 via-white to-purple-50 text-gray-900'} p-6 transition-colors duration-300`}>
+    <div className="min-h-screen bg-gray-900 text-white p-6">
       {/* 헤더 */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="max-w-7xl mx-auto mb-8"
       >
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between border-b-2 pb-4">
           <div>
-            <h1 className="text-5xl font-extrabold bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent mb-2">
+            <h1 className="text-3xl font-bold text-white">
               마이페이지
             </h1>
-            <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-lg`}>{currentUser.name}님의 활동 기록</p>
+            <p className="text-gray-400 text-base mt-2">{currentUser.name}님의 활동 기록</p>
           </div>
           <div className="flex items-center gap-4">
             {/* 출석 체크 버튼 */}
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+            <button
               onClick={handleCheckIn}
-              className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 rounded-xl font-bold text-white shadow-lg transition flex items-center gap-2"
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg font-semibold text-white transition-colors"
             >
-              <span className="text-2xl">✓</span>
-              <span>출석 체크</span>
-            </motion.button>
-
-            {/* 다크모드 토글 */}
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setIsDark(!isDark)}
-              className={`p-3 rounded-xl font-semibold transition ${isDark
-                ? 'bg-gray-800 hover:bg-gray-700'
-                : 'bg-white hover:bg-gray-100 shadow-lg'
-                }`}
-              title={isDark ? '라이트 모드로 전환' : '다크 모드로 전환'}
-            >
-              {isDark ? (
-                <svg className="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
-                </svg>
-              ) : (
-                <svg className="w-6 h-6 text-gray-700" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
-                </svg>
-              )}
-            </motion.button>
+              출석 체크
+            </button>
 
             <div className="text-right">
-              <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>총 출석일</div>
-              <div className={`text-2xl font-bold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+              <div className="text-sm text-gray-400">총 출석일</div>
+              <div className="text-2xl font-bold text-blue-400">
                 {Array.isArray(attendances) ? attendances.length : 0}일
               </div>
             </div>
@@ -950,38 +893,31 @@ export default function MyPage() {
           transition={{ delay: 0.1 }}
           className="lg:col-span-2"
         >
-          <div className={`rounded-2xl p-6 border shadow-2xl ${isDark
-            ? 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border-gray-700/50'
-            : 'bg-white border-gray-200'
-            }`}>
+          <div className="rounded-lg p-6 border bg-gray-800 border-gray-700">
             <div className="flex items-center justify-between mb-6">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+              <button
                 onClick={() =>
                   setCurrentDate(
                     new Date(currentDate.getFullYear(), currentDate.getMonth() - 1)
                   )
                 }
-                className="px-5 py-2.5 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 rounded-xl transition text-lg font-semibold shadow-lg"
+                className="px-5 py-2.5 rounded-lg transition-colors text-lg font-semibold bg-gray-700 hover:bg-gray-600 text-white"
               >
                 ←
-              </motion.button>
-              <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+              </button>
+              <h2 className="text-2xl font-bold text-white">
                 {currentDate.getFullYear()}년 {currentDate.getMonth() + 1}월
               </h2>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+              <button
                 onClick={() =>
                   setCurrentDate(
                     new Date(currentDate.getFullYear(), currentDate.getMonth() + 1)
                   )
                 }
-                className="px-5 py-2.5 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 rounded-xl transition text-lg font-semibold shadow-lg"
+                className="px-5 py-2.5 rounded-lg transition-colors text-lg font-semibold bg-gray-700 hover:bg-gray-600 text-white"
               >
                 →
-              </motion.button>
+              </button>
             </div>
 
             {/* 요일 헤더 */}
@@ -989,8 +925,9 @@ export default function MyPage() {
               {weekDays.map((day, index) => (
                 <div
                   key={day}
-                  className={`text-center font-bold py-2 ${index === 0 ? "text-red-400" : index === 6 ? "text-blue-400" : "text-gray-400"
-                    }`}
+                  className={`text-center font-bold py-2 ${
+                    index === 0 ? "text-red-500" : index === 6 ? "text-blue-500" : "text-gray-300"
+                  }`}
                 >
                   {day}
                 </div>
@@ -1019,11 +956,11 @@ export default function MyPage() {
                       transition-all relative overflow-hidden
                       ${!day ? "invisible" : ""}
                       ${isTodayDate && !hasAttendance
-                        ? "bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/50 ring-2 ring-yellow-400"
+                        ? "bg-orange-600 text-white ring-2 ring-yellow-400"
                         : ""
                       }
                       ${hasAttendance
-                        ? "bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/50"
+                        ? "bg-blue-600 text-white"
                         : !isTodayDate ? "bg-gray-800/80 hover:bg-gray-700/80 text-white" : ""
                       }
                       ${isSelected
@@ -1045,37 +982,6 @@ export default function MyPage() {
             </div>
           </div>
 
-          {/* 기록 추가 버튼들 */}
-          <div className="mt-6 grid grid-cols-3 gap-3">
-            <motion.button
-              whileHover={{ scale: 1.03, y: -2 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => openAddRecordModal('exercise')}
-              className="bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-xl p-4 font-bold shadow-lg transition flex flex-col items-center gap-2"
-            >
-              <span className="text-3xl">💪</span>
-              <span>운동 기록</span>
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.03, y: -2 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => openAddRecordModal('diet')}
-              className="bg-gradient-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 rounded-xl p-4 font-bold shadow-lg transition flex flex-col items-center gap-2"
-            >
-              <span className="text-3xl">🍽️</span>
-              <span>식단 기록</span>
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.03, y: -2 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => openAddRecordModal('health')}
-              className="bg-gradient-to-br from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 rounded-xl p-4 font-bold shadow-lg transition flex flex-col items-center gap-2"
-            >
-              <span className="text-3xl">❤️</span>
-              <span>건강 기록</span>
-            </motion.button>
-          </div>
-
           {/* 선택된 날짜의 기록 */}
           <AnimatePresence>
             {selectedDate && selectedRecords && (
@@ -1087,6 +993,18 @@ export default function MyPage() {
               />
             )}
           </AnimatePresence>
+
+          {/* 기록 추가 버튼 */}
+          <motion.button
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            whileHover={{ scale: 1.02 }}
+            className="mt-6 w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold hover:from-blue-700 hover:to-purple-700 transition"
+            onClick={() => setShowAddRecordModal(true)}
+          >
+            클릭하여 기록 추가 →
+          </motion.button>
         </motion.div>
 
         {/* 오른쪽: 포인트 & 회원정보 */}
@@ -1100,7 +1018,7 @@ export default function MyPage() {
           <motion.div
             whileHover={{ scale: 1.03, y: -5 }}
             whileTap={{ scale: 0.98 }}
-            className="bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 rounded-2xl p-6 cursor-pointer shadow-2xl shadow-purple-500/30 relative overflow-hidden"
+            className="bg-blue-600 rounded-2xl p-6 cursor-pointer relative overflow-hidden"
             onClick={() => setShowPointModal(true)}
           >
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
@@ -1114,33 +1032,33 @@ export default function MyPage() {
           </motion.div>
 
           {/* 회원 정보 */}
-          <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 shadow-2xl">
-            <h3 className="text-xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+          <div className={`rounded-lg p-6 border bg-gray-800 border-gray-700`}>
+            <h3 className={`text-xl font-bold mb-4 text-white`}>
               회원 정보
             </h3>
             <div className="space-y-3">
-              <div className="flex justify-between items-center p-3 bg-gray-800/30 rounded-lg">
-                <span className="text-gray-400">이름</span>
+              <div className={`flex justify-between items-center p-3 rounded-lg bg-gray-700`}>
+                <span className={`text-gray-400`}>이름</span>
                 <span className="font-bold text-lg">{currentUser.name}</span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-gray-800/30 rounded-lg">
-                <span className="text-gray-400">학번</span>
+              <div className={`flex justify-between items-center p-3 rounded-lg bg-gray-700`}>
+                <span className={`text-gray-400`}>학번</span>
                 <span className="font-bold">{currentUser.student_no}</span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-gray-800/30 rounded-lg">
-                <span className="text-gray-400">학과</span>
+              <div className={`flex justify-between items-center p-3 rounded-lg bg-gray-700`}>
+                <span className={`text-gray-400`}>학과</span>
                 <span className="font-bold">{currentUser.department}</span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-gray-800/30 rounded-lg">
-                <span className="text-gray-400">학년</span>
+              <div className={`flex justify-between items-center p-3 rounded-lg bg-gray-700`}>
+                <span className={`text-gray-400`}>학년</span>
                 <span className="font-bold">{currentUser.grade}학년</span>
               </div>
             </div>
           </div>
 
           {/* 통계 카드 */}
-          <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 shadow-2xl">
-            <h3 className="text-xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+          <div className={`rounded-lg p-6 border bg-gray-800 border-gray-700`}>
+            <h3 className={`text-xl font-bold mb-4 text-white`}>
               이번 달 활동
             </h3>
             <div className="grid grid-cols-2 gap-3">
@@ -1168,10 +1086,13 @@ export default function MyPage() {
           {/* 뱃지 카드 */}
           <motion.div
             whileHover={{ scale: 1.02 }}
-            className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 shadow-2xl cursor-pointer"
+            className={`rounded-2xl p-6 border cursor-pointer ${isDark
+              ? 'bg-gray-800 border-gray-700'
+              : 'bg-white border-gray-200'
+            }`}
             onClick={() => setShowBadgeModal(true)}
           >
-            <h3 className="text-xl font-bold mb-4 bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent flex items-center gap-2">
+            <h3 className={`text-xl font-bold mb-4 flex items-center gap-2 text-white`}>
               <span className="text-2xl">🏆</span> 나의 뱃지
             </h3>
             <div className="grid grid-cols-4 gap-2 mb-3">
@@ -1195,6 +1116,7 @@ export default function MyPage() {
               </span>
             </div>
           </motion.div>
+
         </motion.div>
       </div>
 
@@ -1205,7 +1127,7 @@ export default function MyPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
             onClick={() => setShowPointModal(false)}
           >
             <motion.div
@@ -1213,9 +1135,9 @@ export default function MyPage() {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-8 max-w-2xl w-full max-h-[80vh] overflow-y-auto border border-gray-700 shadow-2xl"
+              className="bg-gray-800 rounded-2xl p-8 max-w-2xl w-full max-h-[80vh] overflow-y-auto border border-gray-700"
             >
-              <h2 className="text-3xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+              <h2 className={`text-2xl font-bold mb-6 text-white`}>
                 포인트 내역
               </h2>
 
@@ -1227,7 +1149,7 @@ export default function MyPage() {
                       key={`earn-${item.achievement_id}`}
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="bg-gray-800/50 backdrop-blur-sm p-4 rounded-xl flex justify-between items-center border border-gray-700/50 hover:border-gray-600/50 transition"
+                      className="bg-gray-700 p-4 rounded-xl flex justify-between items-center border border-gray-700/50 hover:border-gray-600/50 transition"
                     >
                       <div>
                         <div className="font-semibold text-lg">
@@ -1249,7 +1171,7 @@ export default function MyPage() {
                       key={`use-${item.exchange_id}`}
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="bg-gray-800/50 backdrop-blur-sm p-4 rounded-xl flex justify-between items-center border border-gray-700/50 hover:border-gray-600/50 transition"
+                      className="bg-gray-700 p-4 rounded-xl flex justify-between items-center border border-gray-700/50 hover:border-gray-600/50 transition"
                     >
                       <div>
                         <div className="font-semibold text-lg">
@@ -1275,7 +1197,7 @@ export default function MyPage() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setShowPointModal(false)}
-                className="mt-6 w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-xl font-bold text-lg transition shadow-lg"
+                className="mt-6 w-full py-4 bg-blue-600 hover:bg-blue-700 rounded-xl font-bold text-lg transition shadow-lg"
               >
                 닫기
               </motion.button>
@@ -1291,7 +1213,7 @@ export default function MyPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
             onClick={() => setShowBadgeModal(false)}
           >
             <motion.div
@@ -1299,9 +1221,9 @@ export default function MyPage() {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-8 max-w-4xl w-full max-h-[80vh] overflow-y-auto border border-gray-700 shadow-2xl"
+              className="bg-gray-800 rounded-2xl p-8 max-w-4xl w-full max-h-[80vh] overflow-y-auto border border-gray-700"
             >
-              <h2 className="text-3xl font-bold mb-6 bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent flex items-center gap-3">
+              <h2 className="text-3xl font-bold mb-6 text-gray-900 flex items-center gap-3">
                 <span className="text-4xl">🏆</span> 뱃지 컬렉션
               </h2>
 
@@ -1350,7 +1272,7 @@ export default function MyPage() {
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
                         whileHover={{ scale: 1.02 }}
-                        className="bg-gray-800/50 p-4 rounded-xl border border-gray-700/50 text-center opacity-50 grayscale"
+                        className="bg-gray-700 p-4 rounded-xl border border-gray-700/50 text-center opacity-50 grayscale"
                       >
                         <div className="text-5xl mb-2">{badge.icon}</div>
                         <div className="font-bold text-lg mb-1">{badge.badge_name}</div>
@@ -1364,7 +1286,7 @@ export default function MyPage() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setShowBadgeModal(false)}
-                className="mt-8 w-full py-4 bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 rounded-xl font-bold text-lg transition shadow-lg"
+                className="mt-8 w-full py-4 bg-yellow-600 hover:bg-yellow-700 rounded-xl font-bold text-lg transition shadow-lg"
               >
                 닫기
               </motion.button>
@@ -1377,8 +1299,6 @@ export default function MyPage() {
       <AnimatePresence>
         {showAddRecordModal && (
           <AddRecordModal
-            type={recordType}
-            isDark={isDark}
             exerciseList={exerciseList}
             foodList={foodList}
             onClose={() => setShowAddRecordModal(false)}
@@ -1391,7 +1311,7 @@ export default function MyPage() {
 
       {/* 나의 요약 섹션 */}
       <div className="max-w-7xl mx-auto mt-8">
-        <h2 className="text-3xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+        <h2 className={`text-2xl font-bold mb-6 text-white`}>
           나의 요약
         </h2>
 
@@ -1401,45 +1321,45 @@ export default function MyPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className={`rounded-2xl p-6 border shadow-xl ${isDark
-              ? 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border-gray-700/50'
+              ? 'bg-gray-800 border-gray-700'
               : 'bg-white border-gray-200'
               }`}
           >
-            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <span className="text-2xl">🔥</span> 최근 활동 요약
+            <h3 className={`text-xl font-bold mb-4 flex items-center gap-2 text-white`}>
+              <span className="text-2xl"></span> 최근 활동 요약
             </h3>
             <div className="space-y-3">
-              <div className="text-sm text-gray-400">이번 달은 화요일, 목요일에 집중히 운동하셨어요!</div>
-              <div className="flex justify-around items-end h-32 bg-gray-800/30 rounded-lg p-4">
-                <div className="flex flex-col items-center gap-2">
+              <div className={`text-sm text-gray-400`}>이번 달은 화요일, 목요일에 집중히 운동하셨어요!</div>
+              <div className="flex justify-around items-end h-32 rounded-lg p-4">
+                <div className="flex flex-col items-center gap-1">
+                  <div className="w-8 rounded-t bg-gray-700" style={{ height: '20%' }}></div>
                   <div className="text-xs text-gray-400">월</div>
-                  <div className="w-8 bg-gray-700 rounded-t" style={{ height: '20%' }}></div>
                 </div>
-                <div className="flex flex-col items-center gap-2">
+                <div className="flex flex-col items-center gap-1">
                   <div className="text-xs text-blue-400 font-bold">4번</div>
-                  <div className="w-8 bg-gradient-to-t from-blue-500 to-blue-400 rounded-t" style={{ height: '80%' }}></div>
+                  <div className="w-8 bg-blue-500 rounded-t" style={{ height: '80%' }}></div>
                   <div className="text-xs text-gray-400">화</div>
                 </div>
-                <div className="flex flex-col items-center gap-2">
+                <div className="flex flex-col items-center gap-1">
+                  <div className="w-8 rounded-t bg-gray-700" style={{ height: '40%' }}></div>
                   <div className="text-xs text-gray-400">수</div>
-                  <div className="w-8 bg-gray-700 rounded-t" style={{ height: '40%' }}></div>
                 </div>
-                <div className="flex flex-col items-center gap-2">
+                <div className="flex flex-col items-center gap-1">
                   <div className="text-xs text-blue-400 font-bold">4번</div>
-                  <div className="w-8 bg-gradient-to-t from-blue-500 to-blue-400 rounded-t" style={{ height: '80%' }}></div>
+                  <div className="w-8 bg-blue-500 rounded-t" style={{ height: '80%' }}></div>
                   <div className="text-xs text-gray-400">목</div>
                 </div>
-                <div className="flex flex-col items-center gap-2">
+                <div className="flex flex-col items-center gap-1">
+                  <div className="w-8 rounded-t bg-gray-700" style={{ height: '30%' }}></div>
                   <div className="text-xs text-gray-400">금</div>
-                  <div className="w-8 bg-gray-700 rounded-t" style={{ height: '30%' }}></div>
                 </div>
-                <div className="flex flex-col items-center gap-2">
+                <div className="flex flex-col items-center gap-1">
+                  <div className="w-8 rounded-t bg-gray-700" style={{ height: '50%' }}></div>
                   <div className="text-xs text-gray-400">토</div>
-                  <div className="w-8 bg-gray-700 rounded-t" style={{ height: '50%' }}></div>
                 </div>
-                <div className="flex flex-col items-center gap-2">
+                <div className="flex flex-col items-center gap-1">
+                  <div className="w-8 rounded-t bg-gray-700" style={{ height: '10%' }}></div>
                   <div className="text-xs text-gray-400">일</div>
-                  <div className="w-8 bg-gray-700 rounded-t" style={{ height: '10%' }}></div>
                 </div>
               </div>
             </div>
@@ -1451,7 +1371,7 @@ export default function MyPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
             className={`rounded-2xl p-6 border shadow-xl ${isDark
-              ? 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border-gray-700/50'
+              ? 'bg-gray-800 border-gray-700'
               : 'bg-white border-gray-200'
               }`}
           >
@@ -1459,17 +1379,17 @@ export default function MyPage() {
               <span className="text-2xl"></span> 많이 수행한 운동 TOP 3
             </h3>
             <div className="space-y-4">
-              <div className="bg-gray-800/30 rounded-lg p-4">
+              <div className="bg-gray-700 rounded-lg p-4">
                 <div className="inline-block px-3 py-1 bg-gray-700 rounded-full text-xs font-bold mb-2">TOP 1</div>
                 <div className="text-lg font-bold text-blue-400 mb-1">바벨 로우 총 5번 수행했어요.</div>
                 <div className="text-xs text-gray-400">평균 5 세트 운동했으며, 다른 운동보다 0.9 세트 더 수행했어요.</div>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-400">TOP 2</span>
+                <span className={`text-gray-400`}>TOP 2</span>
                 <span className="font-bold">스쿼트 4번</span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-400">TOP 3</span>
+                <span className={`text-gray-400`}>TOP 3</span>
                 <span className="font-bold">벤치프레스 4번</span>
               </div>
             </div>
@@ -1481,15 +1401,15 @@ export default function MyPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
             className={`rounded-2xl p-6 border shadow-xl ${isDark
-              ? 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border-gray-700/50'
+              ? 'bg-gray-800 border-gray-700'
               : 'bg-white border-gray-200'
               }`}
           >
             <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <span className="text-2xl">📈</span> 많이 성장한 운동 TOP 3
+              <span className="text-2xl"></span> 많이 성장한 운동 TOP 3
             </h3>
             <div className="space-y-4">
-              <div className="bg-gray-800/30 rounded-lg p-4">
+              <div className="bg-gray-700 rounded-lg p-4">
                 <div className="inline-block px-3 py-1 bg-gray-700 rounded-full text-xs font-bold mb-2">TOP 1</div>
                 <div className="text-lg font-bold mb-3">
                   시티드 덤벨 트라이셉 익스텐션 수행 능력이 <span className="text-blue-400">307.8%</span> 증가했어요.
@@ -1507,11 +1427,11 @@ export default function MyPage() {
                 </div>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-400">TOP 2</span>
+                <span className={`text-gray-400`}>TOP 2</span>
                 <span className="font-bold">데드리프트 +45%</span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-400">TOP 3</span>
+                <span className={`text-gray-400`}>TOP 3</span>
                 <span className="font-bold">스쿼트 +32%</span>
               </div>
             </div>
@@ -1523,12 +1443,12 @@ export default function MyPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
             className={`rounded-2xl p-6 border shadow-xl ${isDark
-              ? 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border-gray-700/50'
+              ? 'bg-gray-800 border-gray-700'
               : 'bg-white border-gray-200'
               }`}
           >
             <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <span className="text-2xl">🔍</span> 부위별 운동 분석
+              <span className="text-2xl"></span> 부위별 운동 분석
             </h3>
             <div className="text-sm text-gray-400 mb-4">제일 많이 수행한 부위는 등이며, 총 12번을 수행했습니다.</div>
             <div className="flex items-center justify-center mb-4">
@@ -1571,7 +1491,7 @@ export default function MyPage() {
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-gray-600"></div>
-                <span className="text-gray-400">그 외 | 31%</span>
+                <span className={`text-gray-400`}>그 외 | 31%</span>
               </div>
             </div>
             <div className="mt-4 text-xs text-gray-500">* 범위는 이번 기간 그래프 결과 집계가 완료되지 않을 수 있습니다.</div>
@@ -1582,10 +1502,10 @@ export default function MyPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className={`rounded-2xl p-6 border shadow-xl bg-gradient-to-br from-blue-600 to-blue-700 text-white`}
+            className="rounded-lg p-6 border bg-blue-600 border-blue-500 text-white"
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold">💪 이번달 요약</h3>
+              <h3 className="text-xl font-bold">이번달 요약</h3>
               <button className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
                 <span className="text-sm">?</span>
               </button>
@@ -1607,12 +1527,12 @@ export default function MyPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
             className={`rounded-2xl p-6 border shadow-xl ${isDark
-              ? 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border-gray-700/50'
+              ? 'bg-gray-800 border-gray-700'
               : 'bg-white border-gray-200'
               }`}
           >
             <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <span className="text-2xl">⚖️</span> 체중 변화
+              <span className="text-2xl"></span> 체중 변화
             </h3>
             <div className="text-sm text-gray-400 mb-4">최근 30일간 체중이 1.8kg 감소했어요!</div>
 
@@ -1639,9 +1559,13 @@ export default function MyPage() {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setShowGoalPanel(true)}
-        className="fixed right-6 bottom-6 w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full shadow-2xl flex items-center justify-center text-3xl z-40 hover:shadow-purple-500/50 transition-all"
+        className="fixed right-6 bottom-6 w-16 h-16 bg-gradient-to-r from-orange-500 to-yellow-500 rounded-full flex items-center justify-center z-40 shadow-lg hover:shadow-orange-500/50 transition-all"
       >
-        🎯
+        <img
+          src={require('../assets/icons/goal.png')}
+          alt="목표"
+          className="w-10 h-10"
+        />
       </motion.button>
 
       {/* 목표 관리 사이드 패널 */}
@@ -1654,7 +1578,7 @@ export default function MyPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowGoalPanel(false)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+              className="fixed inset-0 bg-black/60 z-40"
             />
 
             {/* 사이드 패널 */}
@@ -1664,25 +1588,24 @@ export default function MyPage() {
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
               className={`fixed right-0 top-0 h-full w-full md:w-[600px] lg:w-[700px] z-50 overflow-y-auto ${isDark
-                ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900'
-                : 'bg-gradient-to-br from-white via-gray-50 to-white'
-                } shadow-2xl`}
+                ? 'bg-gray-900'
+                : 'bg-white'
+                }`}
             >
               {/* 패널 헤더 */}
-              <div className={`sticky top-0 z-10 p-6 border-b backdrop-blur-sm ${isDark
+              <div className={`sticky top-0 z-10 p-6 border-b ${isDark
                 ? 'bg-gray-900/80 border-gray-700'
                 : 'bg-white/80 border-gray-200'
                 }`}>
                 <div className="flex items-center justify-between">
-                  <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent flex items-center gap-3">
+                  <h2 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
                     <span className="text-4xl"></span> 목표 관리
                   </h2>
                   <motion.button
                     whileHover={{ scale: 1.1, rotate: 90 }}
                     whileTap={{ scale: 0.9 }}
                     onClick={() => setShowGoalPanel(false)}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center transition ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
-                      }`}
+                    className="w-10 h-10 rounded-full flex items-center justify-center transition hover:bg-gray-700"
                   >
                     <span className="text-2xl">✕</span>
                   </motion.button>
@@ -1702,7 +1625,9 @@ export default function MyPage() {
 }
 
 // 기록 추가 모달 컴포넌트
-function AddRecordModal({ type, isDark, exerciseList, foodList, onClose, onAddExercise, onAddDiet, onAddHealth }) {
+function AddRecordModal({ exerciseList, foodList, onClose, onAddExercise, onAddDiet, onAddHealth }) {
+  const isDark = true; // 다크모드 고정
+  const [activeTab, setActiveTab] = useState('exercise'); // 탭 상태 추가
   const [selectedExercise, setSelectedExercise] = useState('');
   const [duration, setDuration] = useState('');
   const [selectedFood, setSelectedFood] = useState('');
@@ -1730,11 +1655,11 @@ function AddRecordModal({ type, isDark, exerciseList, foodList, onClose, onAddEx
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (type === 'exercise' && selectedExercise && duration) {
+    if (activeTab === 'exercise' && selectedExercise && duration) {
       onAddExercise(parseInt(selectedExercise), parseInt(duration));
-    } else if (type === 'diet' && selectedFood && mealType) {
+    } else if (activeTab === 'diet' && selectedFood && mealType) {
       onAddDiet(parseInt(selectedFood), mealType);
-    } else if (type === 'health' && height && weight) {
+    } else if (activeTab === 'health' && height && weight) {
       onAddHealth({
         height: parseFloat(height),
         weight: parseFloat(weight),
@@ -1744,21 +1669,12 @@ function AddRecordModal({ type, isDark, exerciseList, foodList, onClose, onAddEx
     }
   };
 
-  const getTitle = () => {
-    switch (type) {
-      case 'exercise': return '💪 운동 기록 추가';
-      case 'diet': return '🍽️ 식단 기록 추가';
-      case 'health': return '❤️ 건강 기록 추가';
-      default: return '기록 추가';
-    }
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
       onClick={onClose}
     >
       <motion.div
@@ -1766,15 +1682,52 @@ function AddRecordModal({ type, isDark, exerciseList, foodList, onClose, onAddEx
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.9, opacity: 0, y: 20 }}
         onClick={(e) => e.stopPropagation()}
-        className={`rounded-2xl p-8 max-w-md w-full border shadow-2xl ${isDark
-          ? 'bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700'
+        className={`rounded-2xl p-8 max-w-md w-full border ${isDark
+          ? 'bg-gray-800 border-gray-700'
           : 'bg-white border-gray-200'
           }`}
       >
-        <h2 className="text-2xl font-bold mb-6">{getTitle()}</h2>
+        <h2 className="text-2xl font-bold mb-6">기록 추가하기</h2>
+
+        {/* 탭 버튼 */}
+        <div className="flex gap-2 mb-6">
+          <button
+            type="button"
+            onClick={() => setActiveTab('exercise')}
+            className={`flex-1 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${
+              activeTab === 'exercise'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
+          >
+            <span>운동</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('diet')}
+            className={`flex-1 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${
+              activeTab === 'diet'
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
+          >
+            <span>식단</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('health')}
+            className={`flex-1 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${
+              activeTab === 'health'
+                ? 'bg-red-600 text-white'
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
+          >
+            <span>건강</span>
+          </button>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {type === 'exercise' && (
+          {activeTab === 'exercise' && (
             <>
               <div>
                 <label className="block text-sm font-semibold mb-2">카테고리</label>
@@ -1788,7 +1741,7 @@ function AddRecordModal({ type, isDark, exerciseList, foodList, onClose, onAddEx
                         ? 'bg-blue-600 text-white'
                         : isDark
                           ? 'bg-gray-700 hover:bg-gray-600'
-                          : 'bg-gray-200 hover:bg-gray-300'
+                          : 'bg-gray-300 hover:bg-gray-300'
                         }`}
                     >
                       {cat}
@@ -1833,7 +1786,7 @@ function AddRecordModal({ type, isDark, exerciseList, foodList, onClose, onAddEx
             </>
           )}
 
-          {type === 'diet' && (
+          {activeTab === 'diet' && (
             <>
               <div>
                 <label className="block text-sm font-semibold mb-2">식사 시간</label>
@@ -1863,7 +1816,7 @@ function AddRecordModal({ type, isDark, exerciseList, foodList, onClose, onAddEx
                         ? 'bg-green-600 text-white'
                         : isDark
                           ? 'bg-gray-700 hover:bg-gray-600'
-                          : 'bg-gray-200 hover:bg-gray-300'
+                          : 'bg-gray-300 hover:bg-gray-300'
                         }`}
                     >
                       {cat}
@@ -1893,7 +1846,7 @@ function AddRecordModal({ type, isDark, exerciseList, foodList, onClose, onAddEx
             </>
           )}
 
-          {type === 'health' && (
+          {activeTab === 'health' && (
             <>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -1968,7 +1921,7 @@ function AddRecordModal({ type, isDark, exerciseList, foodList, onClose, onAddEx
               onClick={onClose}
               className={`flex-1 py-3 rounded-xl font-bold transition ${isDark
                 ? 'bg-gray-700 hover:bg-gray-600'
-                : 'bg-gray-200 hover:bg-gray-300'
+                : 'bg-gray-300 hover:bg-gray-300'
                 }`}
             >
               취소
@@ -1977,7 +1930,7 @@ function AddRecordModal({ type, isDark, exerciseList, foodList, onClose, onAddEx
               type="submit"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-xl font-bold transition shadow-lg"
+              className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 rounded-xl font-bold transition shadow-lg"
             >
               추가
             </motion.button>
