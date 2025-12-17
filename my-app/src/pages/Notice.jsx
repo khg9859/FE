@@ -1,275 +1,993 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 
 export default function Notice() {
-  const [isDark, setIsDark] = useState(() => {
-    const saved = localStorage.getItem('noticePageTheme');
-    return saved ? saved === 'dark' : true;
-  });
+  const [darkMode, setDarkMode] = useState(false);
 
-  const toggleTheme = () => {
-    const newTheme = !isDark;
-    setIsDark(newTheme);
-    localStorage.setItem('noticePageTheme', newTheme ? 'dark' : 'light');
-  };
+  // 다크모드 유지
+  useEffect(() => {
+    const saved = localStorage.getItem('darkMode');
+    if (saved) setDarkMode(JSON.parse(saved));
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('darkMode', JSON.stringify(darkMode));
+  }, [darkMode]);
+
+  // 공지사항 목록 데이터
+  const notices = [
+    {
+      id: 1,
+      title: '2026년 1월 운영시간 변경 안내',
+      date: '2025. 12. 20',
+      content: `신정 연휴 기간 운영시간이 변경됩니다.
+
+[변경 기간]
+2026년 1월 1일 ~ 1월 3일
+
+[변경 시간]
+평일: 09:00 - 18:00
+주말: 휴무
+
+정상 운영은 1월 4일부터 시작됩니다.
+회원 여러분의 양해 부탁드립니다.`
+    },
+    {
+      id: 2,
+      title: '포인트 지급 조건 안내',
+      date: '2025. 12. 17',
+      content: `운동 기록 5회 달성 시 100P가 자동으로 지급됩니다.
+식단 기록 3회 달성 시 50P가 자동으로 지급됩니다.
+헬스장 출석 10회 달성 시 200P가 자동으로 지급됩니다.
+운동 목표 2개 설정 시 80P가 자동으로 지급됩니다.
+
+※ 포인트는 조건 달성 시 자동으로 지급되며, 실시간 알림으로 확인할 수 있습니다.`
+    },
+    {
+      id: 3,
+      title: '신규 운동기구 입고 안내',
+      date: '2025. 12. 16',
+      content: `회원님들의 요청으로 신규 운동기구가 입고되었습니다.
+
+[입고 기구]
+- 스미스 머신 2대
+- 케이블 크로스오버 1대
+- 레그프레스 머신 1대
+- 덤벨 세트 (30kg~50kg)
+
+모든 기구는 12월 18일부터 이용 가능합니다.`
+    },
+    {
+      id: 4,
+      title: '헬스장 정기 점검 안내',
+      date: '2025. 12. 15',
+      content: `안전한 운동 환경 조성을 위해 정기 점검을 실시합니다.
+
+[점검 일시]
+2025년 12월 25일 (수) 14:00 - 18:00
+
+[점검 내용]
+- 전체 운동기구 안전 점검
+- 환기 시스템 점검
+- 시설 보수 작업
+
+점검 시간 동안은 헬스장 이용이 불가합니다.
+양해 부탁드립니다.`
+    },
+    {
+      id: 5,
+      title: '개인 락커 신청 안내',
+      date: '2025. 12. 14',
+      content: `개인 락커 신청을 받습니다.
+
+[신청 기간]
+2025년 12월 16일 ~ 12월 31일
+
+[이용 기간]
+2026년 1월 1일 ~ 6월 30일 (6개월)
+
+[신청 방법]
+헬스장 데스크에서 직접 신청
+월 이용료: 10,000원
+
+선착순 마감되오니 서둘러 신청해주세요.`
+    },
+    {
+      id: 6,
+      title: '12월 우수 회원 선정',
+      date: '2025. 12. 13',
+      content: `12월 우수 회원으로 선정되신 분들을 축하드립니다!
+
+[우수 회원]
+- 김철수 님 (출석 부문)
+- 이영희 님 (운동 기록 부문)
+- 박민수 님 (멘토링 활동 부문)
+
+각 부문 우수 회원께는 500P를 지급해드립니다.
+앞으로도 꾸준한 운동 부탁드립니다!`
+    },
+    {
+      id: 7,
+      title: '헬스장 청결 캠페인',
+      date: '2025. 12. 12',
+      content: `깨끗한 헬스장 만들기 캠페인을 진행합니다.
+
+[캠페인 기간]
+2025년 12월 15일 ~ 12월 31일
+
+[참여 방법]
+운동 후 사용한 기구 닦기
+타올 제자리에 반납하기
+락커룸 정리정돈하기
+
+적극적으로 참여해주시는 회원님께는
+추가 포인트를 지급해드립니다.`
+    },
+    {
+      id: 8,
+      title: 'GX룸 요가 수업 신규 오픈',
+      date: '2025. 12. 11',
+      content: `요가 수업이 새롭게 오픈됩니다!
+
+[수업 일정]
+매주 화, 목 오전 10:00 - 11:00
+
+[수업 내용]
+- 기초 스트레칭
+- 요가 자세 교정
+- 호흡법 훈련
+
+[수강료]
+무료 (헬스장 회원 대상)
+
+수업 참여를 원하시는 분은 데스크에서 사전 신청해주세요.`
+    },
+    {
+      id: 9,
+      title: '운동 상담 서비스 안내',
+      date: '2025. 12. 10',
+      content: `전문 트레이너의 무료 운동 상담을 받아보세요!
+
+[상담 가능 시간]
+평일 오후 2시 - 5시
+
+[상담 내용]
+- 개인 맞춤 운동 프로그램 작성
+- 식단 관리 조언
+- 부상 방지 운동법
+- 운동 자세 교정
+
+상담 예약은 데스크 또는 앱에서 가능합니다.`
+    },
+    {
+      id: 10,
+      title: '헬스장 회원권 연장 할인 이벤트',
+      date: '2025. 12. 09',
+      content: `12월 한정 회원권 연장 할인 이벤트!
+
+[할인 내용]
+3개월 연장: 10% 할인
+6개월 연장: 15% 할인
+12개월 연장: 20% 할인
+
+[이벤트 기간]
+2025년 12월 9일 ~ 12월 31일
+
+데스크에서 바로 연장하시고 할인 혜택 받으세요!`
+    },
+    {
+      id: 11,
+      title: '크리스마스 특별 이벤트',
+      date: '2025. 12. 08',
+      content: `크리스마스 특별 이벤트를 진행합니다!
+
+[이벤트 내용]
+12월 25일 출석 시 300P 지급
+크리스마스 당일 운동 인증샷 업로드 시 추가 200P
+
+[경품 추첨]
+참여자 중 추첨을 통해
+1등: 3개월 무료 이용권
+2등: 1개월 무료 이용권 (3명)
+3등: 헬스 용품 세트 (10명)
+
+많은 참여 부탁드립니다!`
+    },
+    {
+      id: 12,
+      title: '체성분 측정 서비스 무료 제공',
+      date: '2025. 12. 07',
+      content: `전문 체성분 측정기로 무료 측정 서비스를 제공합니다.
+
+[측정 항목]
+- 체중, 체지방률
+- 근육량, 골격근량
+- 기초대사량
+- 내장지방 수치
+
+[이용 방법]
+데스크에서 예약 후 이용
+월 1회 무료 측정 가능
+
+정확한 측정을 위해 운동 전 공복 상태에서 측정해주세요.`
+    },
+    {
+      id: 13,
+      title: 'PT 회원 모집 안내',
+      date: '2025. 12. 06',
+      content: `1:1 개인 PT 회원을 모집합니다.
+
+[PT 프로그램]
+- 체계적인 운동 계획 수립
+- 식단 관리 컨설팅
+- 주 2회 1시간 세션
+
+[가격 안내]
+10회: 300,000원
+20회: 550,000원
+30회: 750,000원
+
+전문 트레이너와 함께 목표를 달성하세요!`
+    },
+    {
+      id: 14,
+      title: '샤워실 온수 공급 중단 안내',
+      date: '2025. 12. 05',
+      content: `보일러 점검으로 온수 공급이 일시 중단됩니다.
+
+[중단 일시]
+2025년 12월 7일 (토) 06:00 - 12:00
+
+[중단 시설]
+남/여 샤워실 온수
+
+점검 완료 후 정상 공급 예정입니다.
+불편을 드려 죄송합니다.`
+    },
+    {
+      id: 15,
+      title: '헬스장 앱 업데이트 안내',
+      date: '2025. 12. 04',
+      content: `헬스장 관리 앱이 업데이트되었습니다.
+
+[주요 업데이트 내용]
+- 운동 기록 UI 개선
+- 식단 관리 기능 추가
+- 출석 체크 자동화
+- 포인트 내역 확인 기능
+
+[업데이트 방법]
+앱스토어/플레이스토어에서
+'한성대 헬스장' 검색 후 업데이트
+
+더욱 편리한 서비스로 찾아뵙겠습니다.`
+    },
+    {
+      id: 16,
+      title: '스쿼트 챌린지 참가자 모집',
+      date: '2025. 12. 03',
+      content: `12월 스쿼트 챌린지에 도전하세요!
+
+[챌린지 기간]
+2025년 12월 9일 ~ 12월 31일
+
+[참가 방법]
+매일 정해진 횟수의 스쿼트 수행
+앱에 인증 사진 업로드
+
+[목표 횟수]
+1주차: 50개/일
+2주차: 75개/일
+3주차: 100개/일
+
+완주자 전원에게 500P 지급!`
+    },
+    {
+      id: 17,
+      title: '주차장 이용 안내',
+      date: '2025. 12. 02',
+      content: `헬스장 전용 주차장 이용 안내입니다.
+
+[주차 위치]
+학교 본관 지하 1층 B구역
+
+[이용 시간]
+헬스장 운영시간과 동일
+
+[주차 요금]
+회원: 무료
+비회원: 시간당 2,000원
+
+주차권은 데스크에서 발급받으세요.`
+    },
+    {
+      id: 18,
+      title: '다이어트 성공 수기 공모전',
+      date: '2025. 12. 01',
+      content: `다이어트 성공 스토리를 공유해주세요!
+
+[응모 기간]
+2025년 12월 1일 ~ 12월 31일
+
+[응모 자격]
+최근 6개월 내 5kg 이상 감량 성공자
+
+[시상 내역]
+대상(1명): 100만원 상당 상품권
+우수상(3명): 30만원 상당 상품권
+참가상(전원): 1,000P
+
+수기는 앱 또는 이메일로 제출해주세요.`
+    },
+    {
+      id: 19,
+      title: '단백질 보충제 할인 판매',
+      date: '2025. 11. 30',
+      content: `운동 필수품! 단백질 보충제 할인 판매합니다.
+
+[판매 제품]
+- 웨이 프로틴 (초코/바닐라)
+- 게이너 프로틴
+- BCAA
+- 크레아틴
+
+[할인율]
+정가 대비 20% 할인
+
+[판매 장소]
+헬스장 데스크
+
+재고 소진 시 판매가 조기 종료될 수 있습니다.`
+    },
+    {
+      id: 20,
+      title: '러닝머신 사용 시간 제한 안내',
+      date: '2025. 11. 29',
+      content: `혼잡 시간대 러닝머신 사용 시간이 제한됩니다.
+
+[제한 시간대]
+평일 오후 6시 ~ 9시
+주말 오전 10시 ~ 오후 1시
+
+[제한 시간]
+1회 30분 (대기자 있을 경우)
+
+보다 많은 회원님들이 이용하실 수 있도록
+양해 부탁드립니다.`
+    },
+    {
+      id: 21,
+      title: '헬스장 홈페이지 리뉴얼',
+      date: '2025. 11. 28',
+      content: `헬스장 홈페이지가 새롭게 단장했습니다!
+
+[새로운 기능]
+- 온라인 회원 가입
+- 실시간 혼잡도 확인
+- 수업 예약 시스템
+- 포인트 상점
+
+지금 바로 새로워진 홈페이지를 방문해보세요!
+www.hansunggym.com`
+    },
+    {
+      id: 22,
+      title: '헬스장 이용 만족도 설문조사',
+      date: '2025. 11. 27',
+      content: `회원님의 소중한 의견을 들려주세요!
+
+[설문 기간]
+2025년 11월 27일 ~ 12월 10일
+
+[소요 시간]
+약 5분
+
+[참여 혜택]
+설문 참여자 전원 200P 지급
+
+설문은 앱 또는 홈페이지에서 참여 가능합니다.
+더 나은 서비스를 위해 많은 참여 부탁드립니다.`
+    },
+    {
+      id: 23,
+      title: '벤치프레스 대회 개최',
+      date: '2025. 11. 26',
+      content: `제1회 한성대 벤치프레스 대회를 개최합니다!
+
+[대회 일시]
+2025년 12월 20일 (금) 오후 6시
+
+[참가 자격]
+헬스장 정회원 (남녀 구분 없음)
+
+[시상 내역]
+1등: 6개월 무료 이용권
+2등: 3개월 무료 이용권
+3등: 1개월 무료 이용권
+
+신청은 12월 15일까지 데스크에서 가능합니다.`
+    },
+    {
+      id: 24,
+      title: '새벽 운동 프로그램 운영',
+      date: '2025. 11. 25',
+      content: `아침형 인간을 위한 새벽 운동 프로그램!
+
+[운영 시간]
+매일 오전 6:00 - 7:00
+
+[프로그램 내용]
+- 스트레칭 및 워밍업
+- 복합 운동 (스쿼트, 데드리프트 등)
+- 유산소 운동
+
+[참가비]
+무료
+
+상쾌한 아침을 운동과 함께 시작하세요!`
+    },
+    {
+      id: 25,
+      title: '헬스장 Instagram 계정 오픈',
+      date: '2025. 11. 24',
+      content: `한성대 헬스장 공식 인스타그램이 오픈했습니다!
+
+[계정명]
+@hansung_fitness
+
+[콘텐츠]
+- 운동 팁 영상
+- 회원 인터뷰
+- 이벤트 소식
+- 운동 루틴 추천
+
+팔로우하고 다양한 정보를 받아보세요!
+팔로워 이벤트도 곧 진행 예정입니다.`
+    },
+    {
+      id: 26,
+      title: '근력 측정 이벤트',
+      date: '2025. 11. 23',
+      content: `나의 근력은 얼마나 될까? 근력 측정 이벤트!
+
+[측정 항목]
+- 벤치프레스 1RM
+- 스쿼트 1RM
+- 데드리프트 1RM
+
+[이벤트 기간]
+2025년 11월 25일 ~ 11월 30일
+
+[참여 혜택]
+측정 결과에 따라 등급별 포인트 지급
+S등급: 500P
+A등급: 300P
+B등급: 200P
+C등급: 100P`
+    },
+    {
+      id: 27,
+      title: '헬스장 CCTV 설치 안내',
+      date: '2025. 11. 22',
+      content: `회원님의 안전을 위해 CCTV가 설치되었습니다.
+
+[설치 위치]
+- 헬스장 내부 전체
+- 탈의실 입구
+- 주차장
+
+[촬영 목적]
+안전 관리 및 사고 예방
+
+개인 프라이버시는 철저히 보호되며,
+영상은 30일간 보관 후 자동 삭제됩니다.`
+    },
+    {
+      id: 28,
+      title: '음료 자판기 위치 변경',
+      date: '2025. 11. 21',
+      content: `음료 자판기 위치가 변경되었습니다.
+
+[기존 위치]
+헬스장 입구
+
+[변경 위치]
+탈의실 앞 복도
+
+더욱 편리한 위치에서 이용하세요.
+이온음료, 단백질 음료 등 다양한 음료를 판매합니다.`
+    },
+    {
+      id: 29,
+      title: '운동 일지 작성 이벤트',
+      date: '2025. 11. 20',
+      content: `꾸준한 운동 일지 작성으로 포인트를 받으세요!
+
+[이벤트 기간]
+2025년 11월 20일 ~ 12월 20일
+
+[참여 방법]
+앱에서 매일 운동 일지 작성
+
+[보상]
+30일 연속 작성: 1,000P
+20일 작성: 500P
+10일 작성: 200P
+
+꾸준한 기록이 성공적인 운동의 시작입니다!`
+    },
+    {
+      id: 30,
+      title: '헬스장 회원 친구 초대 이벤트',
+      date: '2025. 11. 19',
+      content: `친구를 초대하고 함께 포인트를 받으세요!
+
+[이벤트 내용]
+친구가 회원권 구매 시
+초대한 회원: 500P
+가입한 친구: 300P
+
+[이벤트 기간]
+2025년 11월 19일 ~ 12월 31일
+
+[참여 방법]
+앱에서 초대 코드 생성 후 친구에게 공유
+
+함께 운동하면 더욱 즐겁습니다!`
+    },
+    {
+      id: 31,
+      title: '겨울철 부상 예방 가이드',
+      date: '2025. 11. 18',
+      content: `추운 겨울, 운동 부상을 예방하세요!
+
+[부상 예방 수칙]
+1. 충분한 워밍업 (최소 10분)
+2. 스트레칭 철저히 하기
+3. 무리한 중량 피하기
+4. 적절한 운동복 착용
+
+[추천 워밍업]
+- 가벼운 유산소 5분
+- 동적 스트레칭 5분
+- 관절 돌리기
+
+안전한 운동이 가장 중요합니다!`
+    },
+    {
+      id: 32,
+      title: '헬스장 Wi-Fi 비밀번호 변경',
+      date: '2025. 11. 17',
+      content: `보안 강화를 위해 Wi-Fi 비밀번호가 변경되었습니다.
+
+[Wi-Fi 정보]
+네트워크명: Hansung_Fitness
+비밀번호: gym2025!@
+
+[변경 일시]
+2025년 11월 18일 00:00
+
+기존에 연결된 기기는 재연결이 필요합니다.`
+    },
+    {
+      id: 33,
+      title: '단체 회원권 할인 안내',
+      date: '2025. 11. 16',
+      content: `동아리, 학과 단체 회원권 특별 할인!
+
+[할인 조건]
+5인 이상 동시 가입
+
+[할인율]
+5~9명: 15% 할인
+10~19명: 20% 할인
+20명 이상: 25% 할인
+
+[신청 방법]
+대표자가 데스크 방문 또는 전화 문의
+
+함께 운동하면 할인도 받고 재미도 두 배!`
+    },
+    {
+      id: 34,
+      title: '헬스장 공기청정기 가동',
+      date: '2025. 11. 15',
+      content: `쾌적한 운동 환경을 위해 공기청정기를 설치했습니다.
+
+[설치 위치]
+헬스장 내부 4대
+GX룸 1대
+
+[가동 시간]
+헬스장 운영시간 전체
+
+미세먼지 걱정 없이 운동하세요!
+실내 공기질을 실시간으로 모니터링합니다.`
+    },
+    {
+      id: 35,
+      title: '운동화 보관함 무료 제공',
+      date: '2025. 11. 14',
+      content: `운동화 전용 보관함을 무료로 제공합니다.
+
+[위치]
+헬스장 입구 신발장
+
+[이용 방법]
+데스크에서 보관함 번호 부여
+개인 자물쇠 지참 (필수)
+
+[주의사항]
+매월 말일 미사용 보관함은 정리됩니다.
+
+깨끗한 운동화로 쾌적하게 운동하세요!`
+    },
+    {
+      id: 36,
+      title: '근육량 증가 식단 가이드 배포',
+      date: '2025. 11. 13',
+      content: `전문 영양사가 작성한 식단 가이드를 배포합니다.
+
+[가이드 내용]
+- 근육 성장을 위한 영양소
+- 시간대별 식단 예시
+- 보충제 섭취 타이밍
+- 외식 시 메뉴 선택 팁
+
+[배포 장소]
+데스크에서 무료 배포
+앱에서 PDF 다운로드 가능
+
+올바른 식단으로 운동 효과를 극대화하세요!`
+    },
+    {
+      id: 37,
+      title: '헬스장 멤버십 앱 출석 이벤트',
+      date: '2025. 11. 12',
+      content: `앱으로 출석 체크하고 포인트 받으세요!
+
+[이벤트 기간]
+2025년 11월 12일 ~ 12월 12일
+
+[출석 보상]
+7일 연속: 100P
+14일 연속: 300P
+30일 연속: 700P
+
+[참여 방법]
+헬스장 방문 시 앱에서 출석 체크
+
+매일 출석하고 포인트를 모아보세요!`
+    },
+    {
+      id: 38,
+      title: 'TRX 수업 신규 오픈',
+      date: '2025. 11. 11',
+      content: `전신 근력 향상! TRX 수업이 새롭게 오픈됩니다.
+
+[수업 일정]
+매주 월, 수 저녁 8시 ~ 9시
+
+[수업 내용]
+- TRX 기본 자세
+- 코어 강화 운동
+- 전신 근력 운동
+
+[수강 인원]
+회당 최대 10명
+
+[신청 방법]
+앱 또는 데스크에서 예약`
+    },
+    {
+      id: 39,
+      title: '다이어트 식단 상담 서비스',
+      date: '2025. 11. 10',
+      content: `전문 영양사의 1:1 식단 상담을 받아보세요!
+
+[상담 내용]
+- 현재 식습관 분석
+- 개인 맞춤 식단 계획
+- 영양소 섭취 가이드
+- 체중 감량 목표 설정
+
+[상담 시간]
+평일 오후 3시 ~ 6시 (1회 30분)
+
+[예약 방법]
+데스크 또는 앱에서 예약
+
+월 1회 무료 상담 가능합니다.`
+    },
+    {
+      id: 40,
+      title: '헬스장 음악 신청곡 받습니다',
+      date: '2025. 11. 09',
+      content: `운동할 때 듣고 싶은 음악을 신청하세요!
+
+[신청 방법]
+데스크 비치 신청함에 작성
+또는 인스타그램 DM으로 신청
+
+[신청 기간]
+상시 접수
+
+[재생 시간]
+평일 오후 6시 ~ 9시 (피크 타임)
+
+신나는 음악과 함께 더욱 즐거운 운동 되세요!`
+    },
+    {
+      id: 41,
+      title: '운동 장갑 무료 대여 서비스',
+      date: '2025. 11. 08',
+      content: `운동 장갑을 깜빡하셨나요? 걱정 마세요!
+
+[대여 서비스]
+데스크에서 무료 대여 가능
+
+[이용 방법]
+회원증 제시 후 대여
+운동 후 반납 필수
+
+[주의사항]
+분실 시 변상 (10,000원)
+위생을 위해 세척 후 대여
+
+편리하게 이용해주세요!`
+    },
+    {
+      id: 42,
+      title: '헬스장 분실물 보관 안내',
+      date: '2025. 11. 07',
+      content: `분실물을 찾으시는 분은 데스크로 문의주세요.
+
+[보관 기간]
+습득일로부터 30일
+
+[주요 분실물]
+- 운동화, 운동복
+- 물통, 수건
+- 이어폰, 휴대폰 액세서리
+
+[보관 장소]
+데스크 분실물 보관함
+
+30일 경과 후 미찾아간 물품은 폐기됩니다.`
+    },
+    {
+      id: 43,
+      title: '헬스장 회원 커뮤니티 오픈',
+      date: '2025. 11. 06',
+      content: `회원 간 소통 공간, 커뮤니티가 오픈했습니다!
+
+[커뮤니티 기능]
+- 운동 팁 공유
+- 운동 메이트 구하기
+- 식단 인증
+- 자유 게시판
+
+[접속 방법]
+앱 하단 '커뮤니티' 탭
+
+운동 정보를 나누고 함께 성장해요!`
+    },
+    {
+      id: 44,
+      title: '헬스장 이용 에티켓 안내',
+      date: '2025. 11. 05',
+      content: `모두가 즐거운 헬스장을 위한 에티켓을 지켜주세요.
+
+[에티켓 가이드]
+1. 기구 사용 후 땀 닦기
+2. 무게 추 제자리에 정리하기
+3. 휴대폰 통화는 밖에서
+4. 향수나 체취 관리하기
+5. 셀카는 주변을 배려하여
+
+서로 배려하는 문화를 만들어갑니다.`
+    },
+    {
+      id: 45,
+      title: '한파 대비 헬스장 난방 강화',
+      date: '2025. 11. 04',
+      content: `추운 겨울, 따뜻한 헬스장에서 운동하세요!
+
+[난방 시설]
+- 중앙난방 24시간 가동
+- 탈의실 온풍기 추가 설치
+- 샤워실 온수 온도 상향
+
+[적정 실내 온도]
+운동 공간: 20-22도
+탈의실: 24-26도
+
+따뜻하게 운동하시길 바랍니다.`
+    },
+    {
+      id: 46,
+      title: '헬스장 직원 친절 교육 실시',
+      date: '2025. 11. 03',
+      content: `더 나은 서비스를 위해 직원 교육을 실시했습니다.
+
+[교육 내용]
+- 고객 응대 매뉴얼
+- 운동 기구 사용법 안내
+- 응급 상황 대처법
+- 시설 관리 방법
+
+언제나 친절하고 전문적인 서비스로
+회원님을 모시겠습니다.`
+    },
+    {
+      id: 47,
+      title: '운동 중 응급상황 대처 가이드',
+      date: '2025. 11. 02',
+      content: `만일의 사고에 대비한 응급처치 가이드입니다.
+
+[비상 연락처]
+헬스장 데스크: 02-1234-5678
+응급실: 119
+
+[응급 상황 대처]
+1. 즉시 운동 중단
+2. 데스크 직원 호출
+3. 안전한 장소로 이동
+4. 필요시 119 신고
+
+헬스장 내 AED(자동심장충격기)는
+데스크 옆에 비치되어 있습니다.`
+    },
+    {
+      id: 48,
+      title: '헬스장 휴관일 안내',
+      date: '2025. 11. 01',
+      content: `11월 정기 휴관일을 안내드립니다.
+
+[휴관일]
+매월 첫째 주 일요일
+
+[11월 휴관일]
+2025년 11월 3일 (일)
+
+[휴관 사유]
+시설 정기 점검 및 직원 교육
+
+양해 부탁드리며, 다른 날 이용해주세요.`
+    },
+    {
+      id: 49,
+      title: '헬스장 10주년 기념 이벤트 예고',
+      date: '2025. 10. 31',
+      content: `한���대 헬스장 개관 10주년을 기념합니다!
+
+[기념 이벤트 일정]
+2026년 1월 15일 ~ 1월 31일
+
+[예정 이벤트]
+- 회원권 특가 판매
+- 10주년 기념 대회
+- 푸짐한 경품 추첨
+- 우수 회원 시상
+
+자세한 내용은 추후 공지하겠습니다.
+많은 관심 부탁드립니다!`
+    },
+    {
+      id: 50,
+      title: '신규 회원 환영 이벤트',
+      date: '2025. 10. 30',
+      content: `신규 회원 여러분을 환영합니다!
+
+[신규 회원 혜택]
+- 첫 달 이용료 20% 할인
+- 무료 운동 상담 1회
+- 체성분 측정 무료
+- 웰컴 키트 증정
+
+[가입 기간]
+2025년 11월 1일 ~ 11월 30일
+
+지금 바로 헬스장 회원이 되어
+건강한 대학 생활을 시작하세요!`
+    }
+  ];
+
+  const [selectedNotice, setSelectedNotice] = useState(null);
 
   return (
-    <div className={`min-h-screen ${isDark ? 'bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white' : 'bg-gradient-to-br from-blue-50 via-white to-purple-50 text-gray-900'} p-6 transition-colors duration-300`}>
+    <div className={`min-h-screen p-8 transition-colors duration-300 ${
+      darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'
+    }`}>
       {/* 헤더 */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-6xl mx-auto mb-8"
-      >
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-5xl font-extrabold bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent mb-2">
-              공지사항
-            </h1>
-            <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} text-lg`}>헬스장 이용 안내 및 포인트 지급 조건</p>
-          </div>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-3xl font-bold">공지사항</h2>
+        <button
+          onClick={() => setDarkMode(!darkMode)}
+          className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+            darkMode
+              ? 'bg-yellow-500 text-gray-900 hover:bg-yellow-400'
+              : 'bg-gray-700 text-white hover:bg-gray-600'
+          }`}
+        >
+          {darkMode ? '☀️ 라이트 모드' : '🌙 다크 모드'}
+        </button>
+      </div>
 
-          {/* 다크모드 토글 */}
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={toggleTheme}
-            className={`p-3 rounded-xl font-semibold transition ${isDark
-              ? 'bg-gray-800 hover:bg-gray-700'
-              : 'bg-white hover:bg-gray-100 shadow-lg'
-              }`}
-          >
-            {isDark ? '☀️' : '🌙'}
-          </motion.button>
+      <div className="mx-auto">
+        {/* 공지사항 목록 */}
+        {!selectedNotice ? (
+          <div className={`rounded-lg shadow transition ${
+            darkMode ? 'bg-gray-800' : 'bg-white border border-gray-200'
+          }`}>
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              {notices.map((notice) => (
+                <div
+                  key={notice.id}
+                  onClick={() => setSelectedNotice(notice)}
+                  className={`p-5 cursor-pointer transition hover:bg-opacity-50 ${
+                    darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-semibold">{notice.title}</h3>
+                    <span className={`text-sm ${
+                      darkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}>
+                      {notice.date}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          /* 공지사항 상세 */
+          <div className={`rounded-lg shadow transition ${
+            darkMode ? 'bg-gray-800' : 'bg-white border border-gray-200'
+          }`}>
+            <div className="p-6">
+              <button
+                onClick={() => setSelectedNotice(null)}
+                className={`mb-4 text-sm ${
+                  darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'
+                }`}
+              >
+                ← 목록으로 돌아가기
+              </button>
+
+              <div className="border-b pb-4 mb-4">
+                <h3 className="text-2xl font-bold mb-2">{selectedNotice.title}</h3>
+                <span className={`text-sm ${
+                  darkMode ? 'text-gray-400' : 'text-gray-500'
+                }`}>
+                  {selectedNotice.date}
+                </span>
+              </div>
+
+              <div className={`whitespace-pre-line leading-relaxed ${
+                darkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                {selectedNotice.content}
+              </div>
+            </div>
+          </div>
+        )}
+
+      </div>
+
+      {/* 하단 문의 정보 - 페이지 최하단 */}
+      <div className={`mt-12 py-6 border-t ${
+        darkMode ? 'border-gray-700' : 'border-gray-300'
+      }`}>
+        <div className={`text-center text-sm ${
+          darkMode ? 'text-gray-400' : 'text-gray-600'
+        }`}>
+          <p className="font-semibold mb-2">문의사항</p>
+          <p className="mb-1">헬스장 이용 및 시스템 관련 문의</p>
+          <p className="font-semibold text-blue-500">
+            gym@hansung.ac.kr | 02-1234-5678
+          </p>
         </div>
-      </motion.div>
-
-      <div className="max-w-6xl mx-auto space-y-6">
-        {/* 포인트 지급 조건 */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className={`rounded-2xl p-8 border shadow-xl ${isDark
-            ? 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border-gray-700/50'
-            : 'bg-white border-gray-200'
-            }`}
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <span className="text-4xl">💰</span>
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
-              포인트 지급 조건
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* 운동 기록 */}
-            <motion.div
-              whileHover={{ scale: 1.02, y: -5 }}
-              className={`p-6 rounded-xl border-2 ${isDark
-                ? 'bg-blue-900/20 border-blue-700/50 hover:border-blue-600'
-                : 'bg-blue-50 border-blue-200 hover:border-blue-400'
-                }`}
-            >
-              <div className="flex items-center gap-3 mb-4">
-                <span className="text-3xl">💪</span>
-                <h3 className="text-xl font-bold">운동 기록</h3>
-              </div>
-              <div className={`text-lg font-semibold mb-2 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
-                5회 달성 시 → 100P
-              </div>
-              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                운동 기록을 5회 추가할 때마다 자동으로 100포인트가 지급됩니다.
-              </p>
-            </motion.div>
-
-            {/* 식단 기록 */}
-            <motion.div
-              whileHover={{ scale: 1.02, y: -5 }}
-              className={`p-6 rounded-xl border-2 ${isDark
-                ? 'bg-green-900/20 border-green-700/50 hover:border-green-600'
-                : 'bg-green-50 border-green-200 hover:border-green-400'
-                }`}
-            >
-              <div className="flex items-center gap-3 mb-4">
-                <span className="text-3xl">🥗</span>
-                <h3 className="text-xl font-bold">식단 기록</h3>
-              </div>
-              <div className={`text-lg font-semibold mb-2 ${isDark ? 'text-green-400' : 'text-green-600'}`}>
-                3회 달성 시 → 50P
-              </div>
-              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                식단 기록을 3회 추가할 때마다 자동으로 50포인트가 지급됩니다.
-              </p>
-            </motion.div>
-
-            {/* 출석 */}
-            <motion.div
-              whileHover={{ scale: 1.02, y: -5 }}
-              className={`p-6 rounded-xl border-2 ${isDark
-                ? 'bg-purple-900/20 border-purple-700/50 hover:border-purple-600'
-                : 'bg-purple-50 border-purple-200 hover:border-purple-400'
-                }`}
-            >
-              <div className="flex items-center gap-3 mb-4">
-                <span className="text-3xl">📅</span>
-                <h3 className="text-xl font-bold">출석 체크</h3>
-              </div>
-              <div className={`text-lg font-semibold mb-2 ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
-                10회 달성 시 → 200P
-              </div>
-              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                헬스장 출석을 10회 할 때마다 자동으로 200포인트가 지급됩니다.
-              </p>
-            </motion.div>
-
-            {/* 목표 설정 */}
-            <motion.div
-              whileHover={{ scale: 1.02, y: -5 }}
-              className={`p-6 rounded-xl border-2 ${isDark
-                ? 'bg-pink-900/20 border-pink-700/50 hover:border-pink-600'
-                : 'bg-pink-50 border-pink-200 hover:border-pink-400'
-                }`}
-            >
-              <div className="flex items-center gap-3 mb-4">
-                <span className="text-3xl">🎯</span>
-                <h3 className="text-xl font-bold">목표 설정</h3>
-              </div>
-              <div className={`text-lg font-semibold mb-2 ${isDark ? 'text-pink-400' : 'text-pink-600'}`}>
-                2개 달성 시 → 80P
-              </div>
-              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                운동 목표를 2개 설정할 때마다 자동으로 80포인트가 지급됩니다.
-              </p>
-            </motion.div>
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className={`mt-6 p-4 rounded-xl ${isDark
-              ? 'bg-yellow-900/20 border border-yellow-700/30'
-              : 'bg-yellow-50 border border-yellow-200'
-              }`}
-          >
-            <div className="flex items-start gap-3">
-              <span className="text-2xl">💡</span>
-              <div className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                <p className="font-semibold mb-1">자동 지급 시스템</p>
-                <p>포인트는 조건 달성 시 자동으로 지급되며, 실시간 알림으로 확인할 수 있습니다!</p>
-              </div>
-            </div>
-          </motion.div>
-        </motion.div>
-
-        {/* 이용 안내 */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className={`rounded-2xl p-8 border shadow-xl ${isDark
-            ? 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border-gray-700/50'
-            : 'bg-white border-gray-200'
-            }`}
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <span className="text-4xl">📢</span>
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-              헬스장 이용 안내
-            </h2>
-          </div>
-
-          <div className="space-y-4">
-            <div className={`p-4 rounded-xl ${isDark ? 'bg-gray-800/50' : 'bg-gray-50'}`}>
-              <h3 className="font-bold text-lg mb-2">🏋️ 이용 시간</h3>
-              <p className={isDark ? 'text-gray-300' : 'text-gray-700'}>
-                평일: 06:00 - 23:00 | 주말: 08:00 - 20:00
-              </p>
-            </div>
-
-            <div className={`p-4 rounded-xl ${isDark ? 'bg-gray-800/50' : 'bg-gray-50'}`}>
-              <h3 className="font-bold text-lg mb-2">👥 최대 수용 인원</h3>
-              <p className={isDark ? 'text-gray-300' : 'text-gray-700'}>
-                동시 이용 가능 인원: 30명 (교양 수업 시간 제외)
-              </p>
-            </div>
-
-            <div className={`p-4 rounded-xl ${isDark ? 'bg-gray-800/50' : 'bg-gray-50'}`}>
-              <h3 className="font-bold text-lg mb-2">📚 교양 수업 시간</h3>
-              <p className={isDark ? 'text-gray-300' : 'text-gray-700'}>
-                교양 수업 진행 중에는 헬스장 이용 인원이 제한됩니다. 수업 시간표는 '교양수업 시간표' 메뉴에서 확인하세요.
-              </p>
-            </div>
-
-            <div className={`p-4 rounded-xl ${isDark ? 'bg-gray-800/50' : 'bg-gray-50'}`}>
-              <h3 className="font-bold text-lg mb-2">🎁 포인트 사용</h3>
-              <p className={isDark ? 'text-gray-300' : 'text-gray-700'}>
-                획득한 포인트는 '포인트 교환소'에서 다양한 보상 상품으로 교환할 수 있습니다.
-              </p>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* 멘토링 안내 */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className={`rounded-2xl p-8 border shadow-xl ${isDark
-            ? 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border-gray-700/50'
-            : 'bg-white border-gray-200'
-            }`}
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <span className="text-4xl">🤝</span>
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
-              멘토링 시스템
-            </h2>
-          </div>
-
-          <div className="space-y-4">
-            <p className={`text-lg ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-              운동 초보자와 경험자를 연결하는 멘토링 시스템을 운영하고 있습니다.
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className={`p-4 rounded-xl ${isDark ? 'bg-blue-900/20' : 'bg-blue-50'}`}>
-                <h3 className="font-bold text-lg mb-2">👨‍🏫 멘토가 되려면?</h3>
-                <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                  '멘토링 신청' 메뉴에서 멘토 모집글을 작성하고, 멘티의 신청을 받아보세요.
-                </p>
-              </div>
-
-              <div className={`p-4 rounded-xl ${isDark ? 'bg-green-900/20' : 'bg-green-50'}`}>
-                <h3 className="font-bold text-lg mb-2">🙋 멘티가 되려면?</h3>
-                <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                  '멘토링 신청' 메뉴에서 멘토를 찾아 신청하거나, 멘티 모집글을 작성하세요.
-                </p>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* 문의 */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className={`rounded-2xl p-8 border shadow-xl text-center ${isDark
-            ? 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border-gray-700/50'
-            : 'bg-white border-gray-200'
-            }`}
-        >
-          <span className="text-5xl mb-4 block">📞</span>
-          <h2 className="text-2xl font-bold mb-4">문의사항</h2>
-          <p className={`${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-            헬스장 이용 및 시스템 관련 문의
-          </p>
-          <p className="text-xl font-bold text-blue-500">
-            📧 gym@hansung.ac.kr | ☎️ 02-1234-5678
-          </p>
-        </motion.div>
       </div>
     </div>
   );

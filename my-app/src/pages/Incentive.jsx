@@ -10,6 +10,16 @@ function IncentivePage() {
     const [totalPoints, setTotalPoints] = useState(0);
     const [isDarkMode, setIsDarkMode] = useState(false);
 
+    // 다크모드 유지
+    useEffect(() => {
+        const saved = localStorage.getItem('darkMode');
+        if (saved) setIsDarkMode(JSON.parse(saved));
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
+    }, [isDarkMode]);
+
     // 퀘스트 데이터 로드
     useEffect(() => {
         if (user) {
