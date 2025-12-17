@@ -14,23 +14,20 @@ export function MatchProvider({ children }) {
 
   // ✅ 서버에서 데이터 로드
   useEffect(() => {
-    // localStorage에서 matches 먼저 불러오기
-    const savedMatches = localStorage.getItem("matches");
-    if (savedMatches) {
-      setMatches(JSON.parse(savedMatches));
-    }
     fetchAllData();
   }, []);
 
   const fetchAllData = async () => {
     try {
-      const [mentorsRes, menteesRes] = await Promise.all([
+      const [mentorsRes, menteesRes, applicationsRes] = await Promise.all([
         fetch(`${API_URL}/mentors/posts`),
-        fetch(`${API_URL}/mentees/posts`)
+        fetch(`${API_URL}/mentees/posts`),
+        fetch(`${API_URL}/applications`)
       ]);
 
       const mentorsData = await mentorsRes.json();
       const menteesData = await menteesRes.json();
+      const applicationsData = await applicationsRes.json();
 
       setMentors(mentorsData.map(p => ({
         id: Number(p.post_id),
@@ -52,6 +49,18 @@ export function MatchProvider({ children }) {
         goal: p.goal,
         interest: p.interest,
         mentee_contact: p.mentee_contact
+      })));
+
+      // 서버에서 받은 신청/매칭 데이터 변환
+      setMatches(applicationsData.map(app => ({
+        mentoringId: app.mentoring_id,
+        mentorUserId: Number(app.mentor_id),
+        menteeUserId: Number(app.mentee_id),
+        mentorId: Number(app.mentor_id), // post_id 대신 member_id 사용
+        menteeId: Number(app.mentee_id), // post_id 대신 member_id 사용
+        mentorName: app.mentor_name,
+        menteeName: app.mentee_name,
+        status: app.status === "PENDING" ? "pending" : app.status === "ACTIVE" ? "active" : "ended"
       })));
     } catch (error) {
       console.error("데이터 로드 실패:", error);
@@ -149,7 +158,7 @@ export function MatchProvider({ children }) {
   };
 
   // ✅ 매칭 요청 (멘티가 멘토에게 신청)
-  const requestMatch = (mentorUserId, menteeUserId, applicantName) => {
+  const requestMatch = async (mentorUserId, menteeUserId, applicantName) => {
     // userId로 멘토/멘티 찾기
     const mentor = mentors.find((m) => m.userId === mentorUserId);
     const mentee = mentees.find((m) => m.userId === menteeUserId);
@@ -172,56 +181,88 @@ export function MatchProvider({ children }) {
       return;
     }
 
-    const newMatch = {
-      mentorUserId,
-      menteeUserId,
-      mentorId: mentor.id, // post_id (ApplicationsTab에서 사용)
-      menteeId: mentee.id, // post_id (ApplicationsTab에서 사용)
-      mentorName: mentor.userName || "익명 멘토",
-      menteeName: mentee.userName || "익명 멘티",
-      status: "pending", // 대기중 상태
-    };
+    try {
+      const response = await fetch(`${API_URL}/apply`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mentor_id: mentorUserId,
+          mentee_id: menteeUserId
+        })
+      });
 
-    console.log("✅ 생성된 매칭:", newMatch);
+      const data = await response.json();
 
-    setMatches((prev) => {
-      const updated = [...prev, newMatch];
-      console.log("📦 전체 매칭 목록:", updated);
-      localStorage.setItem("matches", JSON.stringify(updated));
-      return updated;
-    });
+      if (!response.ok) {
+        toast.error(data.error || "신청 실패");
+        return;
+      }
 
-    toast.success("멘토에게 신청이 완료되었습니다!");
+      toast.success("멘토에게 신청이 완료되었습니다!");
+      await fetchAllData(); // 데이터 새로고침
+    } catch (error) {
+      console.error("신청 실패:", error);
+      toast.error("신청 중 오류가 발생했습니다.");
+    }
   };
 
   // ✅ 매칭 수락 (멘토가 멘티의 신청을 수락)
-  const acceptMatch = (mentorUserId, menteeUserId) => {
-    setMatches((prev) => {
-      const updated = prev.map((m) =>
-        m.mentorUserId === mentorUserId && m.menteeUserId === menteeUserId
-          ? { ...m, status: "active" }
-          : m
-      );
-      localStorage.setItem("matches", JSON.stringify(updated));
-      return updated;
-    });
-    toast.success("🎉 매칭이 완료되었습니다!");
+  const acceptMatch = async (mentorUserId, menteeUserId) => {
+    try {
+      const match = matches.find(m => m.mentorUserId === mentorUserId && m.menteeUserId === menteeUserId);
+      if (!match) {
+        toast.error("신청을 찾을 수 없습니다.");
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/accept/${match.mentoringId}`, {
+        method: "PUT"
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.error || "수락 실패");
+        return;
+      }
+
+      toast.success("🎉 매칭이 완료되었습니다!");
+      await fetchAllData(); // 데이터 새로고침
+    } catch (error) {
+      console.error("수락 실패:", error);
+      toast.error("수락 중 오류가 발생했습니다.");
+    }
   };
 
-  // ✅ 매칭 파기
-  const terminateMatch = (mentorUserId, menteeUserId) => {
-    setMatches((prev) => {
-      // terminated 상태로 변경하는 대신, 배열에서 완전히 제거
-      const updated = prev.filter(
-        (m) => !(m.mentorUserId === mentorUserId && m.menteeUserId === menteeUserId)
-      );
-      localStorage.setItem("matches", JSON.stringify(updated));
-      return updated;
-    });
-    toast("매칭이 종료되었습니다.", {
-      icon: "⚠️",
-      style: { background: "#555", color: "#fff" },
-    });
+  // ✅ 매칭 파기 또는 거절
+  const terminateMatch = async (mentorUserId, menteeUserId) => {
+    try {
+      const match = matches.find(m => m.mentorUserId === mentorUserId && m.menteeUserId === menteeUserId);
+      if (!match) {
+        toast.error("매칭을 찾을 수 없습니다.");
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/reject/${match.mentoringId}`, {
+        method: "DELETE"
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.error || "처리 실패");
+        return;
+      }
+
+      toast("매칭이 종료되었습니다.", {
+        icon: "⚠️",
+        style: { background: "#555", color: "#fff" },
+      });
+      await fetchAllData(); // 데이터 새로고침
+    } catch (error) {
+      console.error("처리 실패:", error);
+      toast.error("처리 중 오류가 발생했습니다.");
+    }
   };
 
   return (
