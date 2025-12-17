@@ -1,10 +1,11 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import toast from "react-hot-toast";
+import { getApiUrl } from "../../config/api";
 
 const MatchContext = createContext();
 export const useMatch = () => useContext(MatchContext);
 
-const API_URL = "http://localhost:5001/api/mentoring";
+const API_URL = getApiUrl("/api/mentoring");
 
 export function MatchProvider({ children }) {
   const [mentors, setMentors] = useState([]);

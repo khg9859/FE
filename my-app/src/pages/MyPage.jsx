@@ -18,6 +18,7 @@ import { usePoints } from "../context/PointContext";
 import { useAuth } from "../context/AuthContext";
 import toast from 'react-hot-toast';
 import goalIcon from '../assets/icons/goal.png';
+import { getApiUrl } from "../config/api";
 
 // Chart.js 등록
 ChartJS.register(
@@ -516,7 +517,7 @@ export default function MyPage() {
 
     try {
       // 서버에 출석 체크 요청
-      const response = await fetch('http://localhost:5001/api/attendance/check-in', {
+      const response = await fetch(getApiUrl('/api/attendance/check-in'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -539,7 +540,7 @@ export default function MyPage() {
       });
 
       // 서버에서 최신 출석 데이터 다시 가져오기
-      const attendanceResponse = await fetch(`http://localhost:5001/api/attendance/${currentUser.member_id}`);
+      const attendanceResponse = await fetch(getApiUrl(`/api/attendance/${currentUser.member_id}`));
       if (attendanceResponse.ok) {
         const attendanceData = await attendanceResponse.json();
         setAttendances(attendanceData);
@@ -591,7 +592,7 @@ export default function MyPage() {
 
       // 서버에서 출석 데이터 가져오기
       try {
-        const attendanceResponse = await fetch(`http://localhost:5001/api/attendance/${user.member_id}`);
+        const attendanceResponse = await fetch(getApiUrl(`/api/attendance/${user.member_id}`));
         if (attendanceResponse.ok) {
           const attendanceData = await attendanceResponse.json();
           setAttendances(attendanceData);
@@ -629,7 +630,7 @@ export default function MyPage() {
   const addExerciseLog = async (exerciseId, duration) => {
     try {
       // 서버에 운동 기록 추가 요청
-      const response = await fetch('http://localhost:5001/api/exercises/logs', {
+      const response = await fetch(getApiUrl('/api/exercises/logs'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -667,7 +668,7 @@ export default function MyPage() {
   const addDietLog = async (foodId, mealType) => {
     try {
       // 서버에 식단 기록 추가 요청
-      const response = await fetch('http://localhost:5001/api/diet/logs', {
+      const response = await fetch(getApiUrl('/api/diet/logs'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -705,7 +706,7 @@ export default function MyPage() {
   const addHealthRecord = async (data) => {
     try {
       // 서버에 건강 기록 추가 요청
-      const response = await fetch('http://localhost:5001/api/health', {
+      const response = await fetch(getApiUrl('/api/health'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -926,9 +927,8 @@ export default function MyPage() {
               {weekDays.map((day, index) => (
                 <div
                   key={day}
-                  className={`text-center font-bold py-2 ${
-                    index === 0 ? "text-red-500" : index === 6 ? "text-blue-500" : "text-gray-300"
-                  }`}
+                  className={`text-center font-bold py-2 ${index === 0 ? "text-red-500" : index === 6 ? "text-blue-500" : "text-gray-300"
+                    }`}
                 >
                   {day}
                 </div>
@@ -1090,7 +1090,7 @@ export default function MyPage() {
             className={`rounded-2xl p-6 border cursor-pointer ${isDark
               ? 'bg-gray-800 border-gray-700'
               : 'bg-white border-gray-200'
-            }`}
+              }`}
             onClick={() => setShowBadgeModal(true)}
           >
             <h3 className={`text-xl font-bold mb-4 flex items-center gap-2 text-white`}>
@@ -1695,33 +1695,30 @@ function AddRecordModal({ exerciseList, foodList, onClose, onAddExercise, onAddD
           <button
             type="button"
             onClick={() => setActiveTab('exercise')}
-            className={`flex-1 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${
-              activeTab === 'exercise'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-            }`}
+            className={`flex-1 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${activeTab === 'exercise'
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
           >
             <span>운동</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('diet')}
-            className={`flex-1 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${
-              activeTab === 'diet'
-                ? 'bg-green-600 text-white'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-            }`}
+            className={`flex-1 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${activeTab === 'diet'
+              ? 'bg-green-600 text-white'
+              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
           >
             <span>식단</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('health')}
-            className={`flex-1 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${
-              activeTab === 'health'
-                ? 'bg-red-600 text-white'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-            }`}
+            className={`flex-1 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${activeTab === 'health'
+              ? 'bg-red-600 text-white'
+              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
           >
             <span>건강</span>
           </button>

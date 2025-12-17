@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import QuestList from '../components/QuestList.jsx';
 import { useAuth } from '../context/AuthContext';
+import { getApiUrl } from '../config/api';
 
 function IncentivePage() {
     const { user } = useAuth();
@@ -30,7 +31,7 @@ function IncentivePage() {
 
     const loadQuests = async () => {
         try {
-            const response = await fetch(`http://localhost:5001/api/quests/member/${user.member_id}`);
+            const response = await fetch(getApiUrl(`/api/quests/member/${user.member_id}`));
             if (response.ok) {
                 const data = await response.json();
                 setQuests(data);
@@ -44,7 +45,7 @@ function IncentivePage() {
 
     const loadUserPoints = async () => {
         try {
-            const response = await fetch('http://localhost:5001/api/auth/me', {
+            const response = await fetch(getApiUrl('/api/auth/me'), {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
@@ -72,58 +73,52 @@ function IncentivePage() {
     }
 
     return (
-        <div className={`p-5 px-10 rounded-none shadow-md flex-grow transition-colors ${
-            isDarkMode ? 'bg-gray-900' : 'bg-gray-100'
-        }`}>
+        <div className={`p-5 px-10 rounded-none shadow-md flex-grow transition-colors ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'
+            }`}>
             {/* 헤더 영역: 포인트 표시 + 다크모드 토글 */}
             <div className="flex justify-between items-center border-b-2 pb-4 mb-8">
-                <h2 className={`text-2xl font-bold ${
-                    isDarkMode ? 'text-white border-gray-700' : 'text-gray-800 border-gray-200'
-                }`}>
+                <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white border-gray-700' : 'text-gray-800 border-gray-200'
+                    }`}>
                     🏆 나의 포인트: {totalPoints} P
                 </h2>
 
                 {/* 다크모드 토글 버튼 */}
                 <button
                     onClick={() => setIsDarkMode(!isDarkMode)}
-                    className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                        isDarkMode
-                            ? 'bg-yellow-500 text-gray-900 hover:bg-yellow-400'
-                            : 'bg-gray-700 text-white hover:bg-gray-600'
-                    }`}
+                    className={`px-4 py-2 rounded-lg font-semibold transition-colors ${isDarkMode
+                        ? 'bg-yellow-500 text-gray-900 hover:bg-yellow-400'
+                        : 'bg-gray-700 text-white hover:bg-gray-600'
+                        }`}
                 >
                     {isDarkMode ? '☀️ 라이트 모드' : '🌙 다크 모드'}
                 </button>
             </div>
 
             {/* 탭 메뉴 */}
-            <div className={`flex justify-center space-x-2 mb-8 border-b ${
-                isDarkMode ? 'border-gray-700' : 'border-gray-300'
-            }`}>
+            <div className={`flex justify-center space-x-2 mb-8 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-300'
+                }`}>
                 <button
-                    className={`py-2 px-6 font-semibold rounded-t-lg transition-colors text-base ${
-                        activeView === 'available'
-                            ? isDarkMode
-                                ? 'border-b-4 border-blue-400 text-blue-400'
-                                : 'border-b-4 border-blue-500 text-blue-600'
-                            : isDarkMode
-                                ? 'text-gray-400 hover:text-gray-200'
-                                : 'text-gray-500 hover:text-gray-800'
-                    }`}
+                    className={`py-2 px-6 font-semibold rounded-t-lg transition-colors text-base ${activeView === 'available'
+                        ? isDarkMode
+                            ? 'border-b-4 border-blue-400 text-blue-400'
+                            : 'border-b-4 border-blue-500 text-blue-600'
+                        : isDarkMode
+                            ? 'text-gray-400 hover:text-gray-200'
+                            : 'text-gray-500 hover:text-gray-800'
+                        }`}
                     onClick={() => setActiveView('available')}
                 >
                     진행할 수 있는 퀘스트
                 </button>
                 <button
-                    className={`py-2 px-6 font-semibold rounded-t-lg transition-colors text-base ${
-                        activeView === 'completed'
-                            ? isDarkMode
-                                ? 'border-b-4 border-blue-400 text-blue-400'
-                                : 'border-b-4 border-blue-500 text-blue-600'
-                            : isDarkMode
-                                ? 'text-gray-400 hover:text-gray-200'
-                                : 'text-gray-500 hover:text-gray-800'
-                    }`}
+                    className={`py-2 px-6 font-semibold rounded-t-lg transition-colors text-base ${activeView === 'completed'
+                        ? isDarkMode
+                            ? 'border-b-4 border-blue-400 text-blue-400'
+                            : 'border-b-4 border-blue-500 text-blue-600'
+                        : isDarkMode
+                            ? 'text-gray-400 hover:text-gray-200'
+                            : 'text-gray-500 hover:text-gray-800'
+                        }`}
                     onClick={() => setActiveView('completed')}
                 >
                     완료한 퀘스트
@@ -147,7 +142,7 @@ function IncentivePage() {
                                 progress: q.current_progress,
                                 target: q.target_value
                             }))}
-                        onCompleteQuest={() => {}}
+                        onCompleteQuest={() => { }}
                         isCompletable={false}
                         isDarkMode={isDarkMode}
                     />
@@ -166,7 +161,7 @@ function IncentivePage() {
                                 progress: q.current_progress,
                                 target: q.target_value
                             }))}
-                        onCompleteQuest={() => {}}
+                        onCompleteQuest={() => { }}
                         isCompletable={false}
                         isDarkMode={isDarkMode}
                     />
@@ -185,7 +180,7 @@ function IncentivePage() {
                                 progress: q.current_progress,
                                 target: q.target_value
                             }))}
-                        onCompleteQuest={() => {}}
+                        onCompleteQuest={() => { }}
                         isCompletable={false}
                         isDarkMode={isDarkMode}
                     />
@@ -204,7 +199,7 @@ function IncentivePage() {
                                 progress: q.current_progress,
                                 target: q.target_value
                             }))}
-                        onCompleteQuest={() => {}}
+                        onCompleteQuest={() => { }}
                         isCompletable={false}
                         isDarkMode={isDarkMode}
                     />
@@ -223,7 +218,7 @@ function IncentivePage() {
                                 progress: q.current_progress,
                                 target: q.target_value
                             }))}
-                        onCompleteQuest={() => {}}
+                        onCompleteQuest={() => { }}
                         isCompletable={false}
                         isDarkMode={isDarkMode}
                     />
@@ -242,7 +237,7 @@ function IncentivePage() {
                                 progress: q.current_progress,
                                 target: q.target_value
                             }))}
-                        onCompleteQuest={() => {}}
+                        onCompleteQuest={() => { }}
                         isCompletable={false}
                         isDarkMode={isDarkMode}
                     />
@@ -261,7 +256,7 @@ function IncentivePage() {
                                 progress: q.current_progress,
                                 target: q.target_value
                             }))}
-                        onCompleteQuest={() => {}}
+                        onCompleteQuest={() => { }}
                         isCompletable={false}
                         isDarkMode={isDarkMode}
                     />
@@ -280,7 +275,7 @@ function IncentivePage() {
                                 progress: q.current_progress,
                                 target: q.target_value
                             }))}
-                        onCompleteQuest={() => {}}
+                        onCompleteQuest={() => { }}
                         isCompletable={false}
                         isDarkMode={isDarkMode}
                     />
@@ -300,7 +295,7 @@ function IncentivePage() {
                         progress: q.current_progress,
                         target: q.target_value
                     }))}
-                    onCompleteQuest={() => {}}
+                    onCompleteQuest={() => { }}
                     isCompletable={false}
                     isDarkMode={isDarkMode}
                 />

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { usePoints } from "../context/PointContext";
 import { useAuth } from "../context/AuthContext";
+import { getApiUrl } from "../config/api";
 
 export default function Goal({ isDark = true }) {
   const { user } = useAuth();
@@ -23,7 +24,7 @@ export default function Goal({ isDark = true }) {
     try {
       setLoading(true);
       // 서버에서 목표 데이터 가져오기
-      const response = await fetch(`http://localhost:5001/api/goals/${user.member_id}`);
+      const response = await fetch(getApiUrl(`/api/goals/${user.member_id}`));
       if (response.ok) {
         const data = await response.json();
         setGoals(data);
@@ -53,7 +54,7 @@ export default function Goal({ isDark = true }) {
       });
 
       // 서버에 목표 추가 요청
-      const response = await fetch('http://localhost:5001/api/goals', {
+      const response = await fetch(getApiUrl('/api/goals'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -92,7 +93,7 @@ export default function Goal({ isDark = true }) {
       if (!goal) return;
 
       // 서버에 목표 업데이트 요청
-      const response = await fetch(`http://localhost:5001/api/goals/${goalId}`, {
+      const response = await fetch(getApiUrl(`/api/goals/${goalId}`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -118,7 +119,7 @@ export default function Goal({ isDark = true }) {
   const deleteGoal = async (goalId) => {
     try {
       // 서버에 목표 삭제 요청
-      const response = await fetch(`http://localhost:5001/api/goals/${goalId}`, {
+      const response = await fetch(getApiUrl(`/api/goals/${goalId}`), {
         method: 'DELETE'
       });
 

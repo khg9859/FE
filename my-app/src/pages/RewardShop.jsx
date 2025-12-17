@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { usePoints } from '../context/PointContext';
 import toast from 'react-hot-toast';
-
-const API_BASE_URL = 'http://localhost:5001';
+import { API_BASE_URL } from '../config/api';
 
 export default function RewardShop() {
     const { totalPoints, subtractPoints } = usePoints();
@@ -132,9 +131,8 @@ export default function RewardShop() {
 
     if (loading) {
         return (
-            <div className={`min-h-screen p-5 px-10 rounded-none shadow-md flex-grow transition-colors flex items-center justify-center ${
-                isDark ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'
-            }`}>
+            <div className={`min-h-screen p-5 px-10 rounded-none shadow-md flex-grow transition-colors flex items-center justify-center ${isDark ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'
+                }`}>
                 <div className="text-center">
                     <div className="text-6xl mb-4">🔄</div>
                     <p className="text-xl">보상 상품을 불러오는 중...</p>
@@ -144,9 +142,8 @@ export default function RewardShop() {
     }
 
     return (
-        <div className={`min-h-screen p-5 px-10 rounded-none shadow-md flex-grow transition-colors ${
-            isDark ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'
-        }`}>
+        <div className={`min-h-screen p-5 px-10 rounded-none shadow-md flex-grow transition-colors ${isDark ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'
+            }`}>
             {/* 헤더 */}
             <div className="mb-8">
                 <div className="flex items-center justify-between border-b-2 pb-4 mb-8">
@@ -160,11 +157,10 @@ export default function RewardShop() {
                         {/* 교환 내역 버튼 */}
                         <button
                             onClick={() => setShowHistoryModal(true)}
-                            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                                isDark
+                            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${isDark
                                     ? 'bg-gray-700 text-white hover:bg-gray-600'
                                     : 'bg-gray-700 text-white hover:bg-gray-600'
-                            }`}
+                                }`}
                         >
                             교환 내역
                         </button>
@@ -172,11 +168,10 @@ export default function RewardShop() {
                         {/* 다크모드 토글 */}
                         <button
                             onClick={() => setIsDark(!isDark)}
-                            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                                isDark
+                            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${isDark
                                     ? 'bg-yellow-500 text-gray-900 hover:bg-yellow-400'
                                     : 'bg-gray-700 text-white hover:bg-gray-600'
-                            }`}
+                                }`}
                         >
                             {isDark ? '☀️ 라이트 모드' : '🌙 다크 모드'}
                         </button>
