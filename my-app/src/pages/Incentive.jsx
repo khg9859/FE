@@ -52,7 +52,7 @@ function IncentivePage() {
             });
             if (response.ok) {
                 const data = await response.json();
-                setTotalPoints(data.member.mypoints || 0);
+                setTotalPoints(data.member.total_points || 0);
             }
         } catch (error) {
             console.error('포인트 로드 실패:', error);
